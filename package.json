@@ -1,0 +1,25 @@
+{
+  "name": "nodejs-mentoring-program",
+  "version": "0.0.1",
+  "description": "NodeJS Mentoring Program Project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/markoboy/nodejs-mentoring-program.git"
+  },
+  "keywords": [
+    "nodejs"
+  ],
+  "author": "Athanasios Markou",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/markoboy/nodejs-mentoring-program/issues"
+  },
+  "homepage": "https://github.com/markoboy/nodejs-mentoring-program#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
+}
