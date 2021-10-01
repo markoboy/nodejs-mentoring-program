@@ -4,7 +4,8 @@
   "description": "NodeJS Mentoring Program Project",
   "main": "index.js",
   "scripts": {
-    "task1.1": "nodemon index.js -t 1.1"
+    "task1.1": "nodemon index.js -t 1.1",
+    "task1.2": "nodemon index.js -t 1.2"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
     "nodemon": "^2.0.12"
   },
   "dependencies": {
-    "command-line-args": "^5.2.0"
+    "command-line-args": "^5.2.0",
+    "csvtojson": "^2.0.10"
   }
 }
