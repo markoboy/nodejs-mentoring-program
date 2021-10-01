@@ -1,6 +1,6 @@
-const commandLineArgs = require('command-line-args');
+import commandLineArgs from 'command-line-args';
 
-const program = require('./src/index');
+import { start } from './src';
 
 /**
  * Allow to run the file with some command line arguments.
@@ -28,4 +28,4 @@ const options = commandLineArgs(optionDefinitions);
 
 const { task = '1.1' } = options;
 
-program.start(`task${task}`);
+start(`task${task}`);

@@ -1,11 +1,11 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Start the main NodeJS program.
  * @param {'task1.1'} task The task to run. This will run based on the folder structure.
  */
-exports.start = function start(task) {
+export function start(task) {
   if (!task) {
     throw new Error('Please provide the task you want to execute!');
   }
@@ -14,14 +14,18 @@ exports.start = function start(task) {
   const taskExists = fs.existsSync(taskPath);
 
   if (!taskExists) {
-    throw new Error(`Task: -- ${task} -- does not exist. Check the src folder for available tasks.`);
+    throw new Error(
+      `Task: -- ${task} -- does not exist. Check the src folder for available tasks.`
+    );
   }
 
-  const taskProgram = require(taskPath);
+  import(taskPath).then((taskProgram) => {
+    if (!Object.hasOwnProperty.call(taskProgram, 'main')) {
+      throw new Error(
+        `Task: -- ${task} -- does not export a main function. Please export a main function in order to boot the task.`
+      );
+    }
 
-  if (!Object.hasOwnProperty.call(taskProgram, 'main')) {
-    throw new Error(`Task: -- ${task} -- does not export a main function. Please export a main function in order to boot the task.`);
-  }
-
-  taskProgram.main();
-};
+    taskProgram.main();
+  });
+}

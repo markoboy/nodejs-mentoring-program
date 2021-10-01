@@ -2,7 +2,7 @@
  * Write a program which reads a string from the standard input stdin, reverses it
  * and then writes it to the standard output stdout.
  */
-const readline = require('readline');
+import readline from 'readline';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -30,7 +30,7 @@ const question = (query) =>
  * The main function to start the program.
  * It will continuously ask a user to provide an input that will be reversed.
  */
-async function main() {
+export async function main() {
   try {
     const answer = await question('What do you want me to reverse?\n');
 
@@ -42,5 +42,3 @@ async function main() {
     main();
   }
 }
-
-exports.main = main;

@@ -2,11 +2,11 @@
  * Write a program that should read a csv file and convert it
  * to JSON using streams so that memory consumption is decreased.
  */
-const fs = require('fs');
-const { resolve } = require('path');
-const { pipeline, Transform } = require('stream');
+import fs from 'fs';
+import { resolve } from 'path';
+import { pipeline, Transform } from 'stream';
 
-const csv = require('csvtojson');
+import csv from 'csvtojson';
 
 const BASE_PATH = resolve(__dirname, '..', '..', 'temp');
 
@@ -67,7 +67,7 @@ function convertCsvToJson(csvPath, outputPath) {
   });
 }
 
-async function main() {
+export async function main() {
   try {
     await convertCsvToJson(CSV_PATH, JSON_PATH);
     console.log(`CSV file: ${CSV_PATH} was successfully converted.`);
@@ -76,5 +76,3 @@ async function main() {
     console.error(error);
   }
 }
-
-exports.main = main;
