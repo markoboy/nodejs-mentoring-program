@@ -5,7 +5,7 @@ import path from 'path';
  * Start the main NodeJS program.
  * @param {'task1.1'} task The task to run. This will run based on the folder structure.
  */
-export function start(task) {
+export async function start(task) {
   if (!task) {
     throw new Error('Please provide the task you want to execute!');
   }
@@ -19,13 +19,13 @@ export function start(task) {
     );
   }
 
-  import(taskPath).then((taskProgram) => {
-    if (!Object.hasOwnProperty.call(taskProgram, 'main')) {
-      throw new Error(
-        `Task: -- ${task} -- does not export a main function. Please export a main function in order to boot the task.`
-      );
-    }
+  const { main } = await import(taskPath);
 
-    taskProgram.main();
-  });
+  if (typeof main !== 'function') {
+    throw new Error(
+      `Task: -- ${task} -- does not export a main function. Please export a main function in order to boot the task.`
+    );
+  }
+
+  main();
 }
