@@ -1,0 +1,19 @@
+{
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "execMap": {
+    "js": "npx babel-node"
+  },
+  "ext": "js",
+  "ignore": [
+    ".git",
+    "node_modules/**/node_modules",
+    "temp/**/*"
+  ],
+  "restartable": "rs",
+  "watch": [
+    "src/",
+    "index.js"
+  ]
+}
