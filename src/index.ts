@@ -1,6 +1,6 @@
-import commandLineArgs from 'command-line-args';
+import commandLineArgs, { OptionDefinition } from 'command-line-args';
 
-import { start } from './src';
+import { start } from './taskRunner';
 
 /**
  * Allow to run the file with some command line arguments.
@@ -14,18 +14,17 @@ import { start } from './src';
  *
  * @type {import('command-line-args').OptionDefinition[]}
  */
-const optionDefinitions = [
-  {
-    name: 'task',
-    alias: 't',
-    type: String,
-    description: 'The task version to process. eg. 1.1',
-    typeLabel: '<string>',
-  },
+const optionDefinitions: OptionDefinition[] = [
+    {
+        alias: 't',
+        defaultValue: '1.1',
+        name: 'task',
+        type: String
+    }
 ];
 
 const options = commandLineArgs(optionDefinitions);
 
-const { task = '1.1' } = options;
+const { task } = options;
 
 start(`task${task}`);
