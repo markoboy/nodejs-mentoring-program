@@ -21,22 +21,22 @@
     "baseUrl": "./src",
     "paths": {
       "@api": [
-        "task2/api"
+        "api"
       ],
       "@api/*": [
-        "task2/api/*"
+        "api/*"
       ],
       "@common": [
-        "task2/common"
+        "common"
       ],
       "@common/*": [
-        "task2/common/*"
+        "common/*"
       ],
       "@core": [
-        "task2/core"
+        "core"
       ],
       "@core/*": [
-        "task2/core/*"
+        "core/*"
       ]
     }
   },
