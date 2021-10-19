@@ -342,5 +342,6 @@
         "__ENV__": true,
         "__DEVTOOLS__": true,
         "PUBLIC_URL": true
-    }
+    },
+    "ignorePatterns": ["scripts"]
 }

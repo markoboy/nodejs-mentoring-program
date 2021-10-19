@@ -11,7 +11,7 @@
         "dev": "cross-env NODE_ENV=development npm-run-all -l -p dev:**",
         "compile": "tsc",
         "build": "npm-run-all -l lint compile",
-        "serve": "node dist/index.js -t 2",
+        "serve": "node -r ./scripts/register-prod.js ./dist/index.js -t 2",
         "start": "cross-env NODE_ENV=production npm-run-all -l build serve",
         "lint:prettier": "prettier src/**/*.ts --write",
         "lint:eslint": "eslint src/**/*.ts --fix",
@@ -51,6 +51,9 @@
     "dependencies": {
         "command-line-args": "^5.2.0",
         "csvtojson": "^2.0.10",
-        "express": "^4.17.1"
+        "express": "^4.17.1",
+        "express-joi-validation": "^5.0.0",
+        "joi": "^17.4.2",
+        "tsconfig-paths": "^3.11.0"
     }
 }

@@ -11,12 +11,34 @@
     "target": "es2020",
     "rootDir": "./src",
     "outDir": "./dist",
-    "allowJs": true,
+    "allowJs": false,
     "checkJs": false,
     "sourceMap": true,
     "strict": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@api": [
+        "task2/api"
+      ],
+      "@api/*": [
+        "task2/api/*"
+      ],
+      "@common": [
+        "task2/common"
+      ],
+      "@common/*": [
+        "task2/common/*"
+      ],
+      "@core": [
+        "task2/core"
+      ],
+      "@core/*": [
+        "task2/core/*"
+      ]
+    }
   },
   "include": [
     "src/**/*"
