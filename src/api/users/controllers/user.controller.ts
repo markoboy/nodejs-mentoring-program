@@ -1,5 +1,5 @@
 import { HttpRequest } from '@common/controllers';
-import { Controller, Delete, Get, Patch, Post } from '@common/decorators';
+import { Controller, Delete, Get, HttpStatus, Patch, Post } from '@common/decorators';
 
 import { CreateUserDTO, FindOneUserDTO, GetSuggestedUsersDTO, UpdateUserDTO } from '../dtos';
 import { IUserSafe, UserService } from '../services';
@@ -8,7 +8,7 @@ import { IUserSafe, UserService } from '../services';
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
-    @Post('/')
+    @Post('/', HttpStatus.CREATED)
     async create(httpRequest: HttpRequest): Promise<IUserSafe> {
         const createUser = await CreateUserDTO.from(httpRequest.body);
 

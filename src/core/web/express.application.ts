@@ -1,7 +1,7 @@
 import { UserModule } from '@api/users';
 import { USER_REPOSITORY_MODEL } from '@api/users/repositories';
 import { HttpRequestMethod, HttpResponseFactory } from '@common/controllers';
-import { BaseController, IControllerDefinition, IRouteDefinition } from '@common/decorators';
+import { BaseController, HttpStatus, IControllerDefinition, IRouteDefinition } from '@common/decorators';
 import { IDatabaseDriver } from '@common/drivers';
 import { Exception } from '@common/exceptions';
 import { CORE_TYPES } from '@core/core.ioc';
@@ -35,10 +35,10 @@ export class ExpressApplication extends AbstractApplication {
             const errResponse = HttpResponseFactory.createErrorResponse([{ name: err.name, message: err.message }]);
 
             if (err instanceof Exception) {
-                return res.status(400).json(errResponse);
+                return res.status(HttpStatus.BAD_REQUEST).json(errResponse);
             }
 
-            return res.status(500).json(errResponse);
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errResponse);
         });
     }
 
@@ -72,7 +72,7 @@ export class ExpressApplication extends AbstractApplication {
 
                     console.timeEnd(`[${controller.target.name}]:[${route.methodName}] Request route handler`);
 
-                    res.status(200).json(HttpResponseFactory.createSuccessfulResponse(data));
+                    res.status(route.status).json(HttpResponseFactory.createSuccessfulResponse(data));
                 } catch (error) {
                     console.timeEnd(`[${controller.target.name}]:[${route.methodName}] Request route handler`);
 
