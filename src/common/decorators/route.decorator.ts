@@ -15,8 +15,8 @@ const routeDecoratorFactory = (method: HttpRequestMethod): IRouteDecorator => {
         return (target, propertyKey): void => {
             const routeMetadata: IRouteDefinition = {
                 method,
-                methodName: propertyKey.toString(),
-                path
+                path,
+                methodName: propertyKey.toString()
             };
 
             const routes: IRouteDefinition[] = Reflect.getOwnMetadata(META_ROUTE, target.constructor) ?? [];

@@ -18,16 +18,6 @@ function getControllerMetadata(constructor: object): IControllerDefinition {
 function getRoutesMetadata(constructor: object): IRouteDefinition[] {
     const routesMetadata: IRouteDefinition[] = Reflect.getOwnMetadata(META_ROUTE, constructor);
 
-    const genericMetadata = Reflect.getMetadata(META_ROUTE, constructor);
-
-    if (genericMetadata !== undefined && routesMetadata !== undefined) {
-        return routesMetadata.concat(genericMetadata);
-    }
-
-    if (genericMetadata !== undefined) {
-        return genericMetadata;
-    }
-
     return routesMetadata;
 }
 
@@ -53,10 +43,14 @@ export abstract class AbstractApplication {
 
         Promise.resolve(this.setup(this.container)).then(({ modules }) => {
             this.registerModules(modules);
+
+            return this.registerErrorMiddleware();
         });
     }
 
     abstract setup(container: interfaces.Container): Promise<IApplicationSetup> | IApplicationSetup;
+
+    abstract registerErrorMiddleware(): Promise<void> | void;
 
     abstract registerController(controller: IControllerDefinition, routes: IRouteDefinition[]): Promise<void> | void;
 

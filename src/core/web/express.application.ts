@@ -3,14 +3,22 @@ import { USER_REPOSITORY_MODEL } from '@api/users/repositories';
 import { HttpRequestMethod, HttpResponseFactory } from '@common/controllers';
 import { BaseController, IControllerDefinition, IRouteDefinition } from '@common/decorators';
 import { IDatabaseDriver } from '@common/drivers';
+import { Exception } from '@common/exceptions';
 import { CORE_TYPES } from '@core/core.ioc';
 import { MemoryDatabase } from '@core/database';
-import express, { Application, Router } from 'express';
+import express, { Application, NextFunction, Request, Response, Router } from 'express';
 import { interfaces } from 'inversify';
-import { AbstractApplication, IApplicationSetup } from './lib';
+import { AbstractApplication, IApplicationOptions, IApplicationSetup } from './lib';
 
 export class ExpressApplication extends AbstractApplication {
     public app: Application = express();
+
+    constructor(options?: IApplicationOptions) {
+        super(options);
+
+        this.app.use(express.urlencoded({ extended: true }));
+        this.app.use(express.json());
+    }
 
     setup(container: interfaces.Container): IApplicationSetup | Promise<IApplicationSetup> {
         container.bind<IDatabaseDriver>(CORE_TYPES.DatabaseDriver).to(MemoryDatabase).inSingletonScope();
@@ -21,7 +29,23 @@ export class ExpressApplication extends AbstractApplication {
         return { modules: [UserModule] };
     }
 
+    registerErrorMiddleware(): void {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        this.app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
+            const errResponse = HttpResponseFactory.createErrorResponse([{ name: err.name, message: err.message }]);
+
+            if (err instanceof Exception) {
+                return res.status(400).json(errResponse);
+            }
+
+            return res.status(500).json(errResponse);
+        });
+    }
+
     registerController(controller: IControllerDefinition, routes: IRouteDefinition[]): void | Promise<void> {
+        console.log(`[Controller]:[${controller.path}] Registration for ${controller.target.name} started`);
+        console.table(routes);
+
         const router = Router();
 
         routes.forEach((route) => {
@@ -50,11 +74,15 @@ export class ExpressApplication extends AbstractApplication {
 
                     res.status(200).json(HttpResponseFactory.createSuccessfulResponse(data));
                 } catch (error) {
+                    console.timeEnd(`[${controller.target.name}]:[${route.methodName}] Request route handler`);
+
                     return next(error);
                 }
             });
         });
 
         this.app.use(controller.path, router);
+
+        console.log(`[Controller]:[${controller.path}] ${controller.target.name} was registered\n`);
     }
 }
