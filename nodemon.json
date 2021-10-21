@@ -8,5 +8,10 @@
     "ext": "ts",
     "ignore": [".git", "node_modules/**/node_modules", "temp/**/*", "dist/**/*"],
     "restartable": "rs",
-    "watch": ["src/"]
+    "watch": ["src/"],
+    "events": {
+        "restart": "kill-port 3000",
+        "crash": "kill-port 3000"
+    },
+    "delay": "500"
 }

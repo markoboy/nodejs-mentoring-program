@@ -1,21 +1,27 @@
+import { inject, injectable } from 'inversify';
+
 import { IDatabaseDriver } from '@common/drivers';
-import { IRepositoryMatchers, IRepositoryFilters, IBaseRepository } from '@common/repositories';
+import { IBaseRepository, IRepositoryFilters, IRepositoryMatchers } from '@common/repositories';
+import { CORE_TYPES } from '@core/core.ioc';
+
 import { UserEntity } from '../entities';
 import { IUserRepository } from '../services';
 
 export const USER_REPOSITORY_MODEL = 'user';
 
+@injectable()
 export class UserRepository implements IUserRepository {
     private readonly userModel: IBaseRepository<UserEntity>;
 
-    constructor(databaseDriver: IDatabaseDriver) {
+    constructor(@inject(CORE_TYPES.DatabaseDriver) databaseDriver: IDatabaseDriver) {
         this.userModel = databaseDriver.getModel<UserEntity>(USER_REPOSITORY_MODEL);
     }
 
     async getAutoSuggestUsers(loginSubstring: string, limit: number): Promise<UserEntity[]> {
         return this.userModel.find(
             {
-                login: loginSubstring
+                login: loginSubstring,
+                isDeleted: false
             },
             {
                 limit

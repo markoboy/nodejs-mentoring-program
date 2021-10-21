@@ -1,1 +1,1 @@
-// TODO: Construct express application
+export * from './express.application';

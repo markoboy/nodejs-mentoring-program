@@ -1,9 +1,12 @@
+import { injectable, inject } from 'inversify';
+
 import { ExistsException } from '@common/exceptions/exists.exception';
 import { NotFoundException } from '@common/exceptions/not-found.exception';
 import { IBaseRepository } from '@common/repositories';
 
-import { IHashService } from '.';
+import { HashService } from '.';
 import { IUserEntity, UserEntity } from '../entities';
+import { USER_TYPES } from '../user.ioc';
 
 export type IUserSafe = Omit<Required<IUserEntity>, 'password'> & {
     password?: null;
@@ -13,8 +16,12 @@ export interface IUserRepository extends IBaseRepository<UserEntity> {
     getAutoSuggestUsers(loginSubstring: string, limit: number): Promise<UserEntity[]>;
 }
 
+@injectable()
 export class UserService {
-    constructor(private userRepository: IUserRepository, private hashService: IHashService) {}
+    constructor(
+        @inject(USER_TYPES.UserRepository) private userRepository: IUserRepository,
+        private hashService: HashService
+    ) {}
 
     async findById(id: string): Promise<IUserSafe> {
         const user = await this.userRepository.findById(id);

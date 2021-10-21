@@ -12,20 +12,26 @@ export interface IUserEntity extends Partial<IBaseEntity> {
     age: number;
 }
 
+export const userLoginValidation = Joi.string();
+
+export const userPasswordValidation = Joi.string()
+    .pattern(/[a-zA-Z]/)
+    .pattern(/[0-9]/);
+
+export const userPasswordMessages = {
+    'string.pattern.base': '"password" must contain letters and numbers'
+};
+
+export const userAgeValidation = Joi.number().integer().min(4).max(130);
+
 const userSchema = Joi.object<IUserEntity, true>({
     id: Joi.string().required(),
 
-    login: Joi.string().required(),
+    login: userLoginValidation.required(),
 
-    password: Joi.string()
-        .pattern(/[a-zA-Z]/)
-        .pattern(/[0-9]/)
-        .required()
-        .messages({
-            'string.pattern.base': '"password" must contain letters and numbers'
-        }),
+    password: userPasswordValidation.required().messages(userPasswordMessages),
 
-    age: Joi.number().integer().min(4).max(130).required(),
+    age: userAgeValidation.required(),
 
     isDeleted: Joi.boolean().required()
 });
