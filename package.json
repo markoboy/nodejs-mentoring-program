@@ -6,6 +6,7 @@
     "scripts": {
         "dev:lint": "esw -w --ext .ts --color",
         "dev:serve": "nodemon src/index.ts",
+        "predev": "npm run docker:up",
         "dev": "cross-env NODE_ENV=development npm-run-all -l -p dev:**",
         "compile": "tsc",
         "build": "npm-run-all -l lint compile",
@@ -13,7 +14,9 @@
         "start": "cross-env NODE_ENV=production npm-run-all -l build serve",
         "lint:prettier": "prettier src/**/*.ts --write",
         "lint:eslint": "eslint src/**/*.ts --fix",
-        "lint": "npm-run-all -l lint:prettier lint:eslint"
+        "lint": "npm-run-all -l lint:prettier lint:eslint",
+        "docker:up": "docker-compose up -d",
+        "docker:down": "docker-compose up -d"
     },
     "repository": {
         "type": "git",
