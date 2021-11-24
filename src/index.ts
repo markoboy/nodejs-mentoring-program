@@ -1,11 +1,17 @@
 import 'reflect-metadata';
+
 import { ExpressApplication } from '@core/web';
+import { getEnvNumber } from '@common/utils';
+import { AppModule } from 'app.module';
 
 async function main(): Promise<void> {
-    const application = new ExpressApplication();
+    const application = new ExpressApplication(AppModule);
+    await application.setup();
 
-    application.app.listen(3000, () => {
-        console.log('App is listening on http://localhost:3000');
+    const PORT = getEnvNumber('PORT', 3000);
+
+    application.app.listen(PORT, () => {
+        console.log(`App is listening on http://localhost:${PORT}`);
     });
 }
 

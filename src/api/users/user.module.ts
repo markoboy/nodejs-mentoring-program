@@ -6,7 +6,7 @@ import { USER_TYPES } from './user.ioc';
 
 @Module({
     controllers: [UserController],
-    services: [
+    providers: [
         {
             type: USER_TYPES.UserRepository,
             target: UserRepository

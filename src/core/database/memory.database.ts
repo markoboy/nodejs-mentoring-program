@@ -1,12 +1,11 @@
-import { injectable } from 'inversify';
-
+import { Provider } from '@common/decorators';
 import { IDatabaseDriver, IDatabaseModel } from '@common/drivers';
 import { IBaseEntity } from '@common/entities';
 import { ExistsException, NotFoundException } from '@common/exceptions';
 
 import { MemoryDatabaseModel } from './memory.database.model';
 
-@injectable()
+@Provider()
 export class MemoryDatabase implements IDatabaseDriver {
     private readonly models: Map<string, IDatabaseModel<never>> = new Map();
 
@@ -14,7 +13,8 @@ export class MemoryDatabase implements IDatabaseDriver {
         const dataModel = this.models.get(model);
 
         if (!dataModel) {
-            throw new NotFoundException(`Model: ${model} was not found.`);
+            this.createModel(model);
+            return this.getModel(model);
         }
 
         return dataModel;

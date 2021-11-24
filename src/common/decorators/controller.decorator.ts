@@ -1,19 +1,23 @@
+import { decorate, injectable, interfaces } from 'inversify';
 import { HttpRequest } from '@common/controllers';
-import { decorate, injectable } from 'inversify';
 
-export const META_CONTROLLER = Symbol.for('MetaController');
+const META_CONTROLLER = Symbol.for('MetaController');
 
 export class BaseController {
     [x: string]: (httpRequest: HttpRequest) => Promise<object> | object;
 }
 
-export interface IControllerTarget {
-    new (...args: never[]): unknown;
-}
+export type IControllerTarget<T = unknown> = interfaces.Newable<T>;
 
 export interface IControllerDefinition {
     path: string;
     target: IControllerTarget;
+}
+
+export function getControllerMetadata(constructor: IControllerTarget): IControllerDefinition {
+    const controllerMetadata: IControllerDefinition = Reflect.getOwnMetadata(META_CONTROLLER, constructor);
+
+    return controllerMetadata ?? {};
 }
 
 export const Controller = (path = ''): ClassDecorator => {

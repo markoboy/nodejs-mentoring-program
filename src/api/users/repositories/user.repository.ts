@@ -1,5 +1,4 @@
-import { inject, injectable } from 'inversify';
-
+import { Inject, Provider } from '@common/decorators';
 import { IDatabaseDriver } from '@common/drivers';
 import { IBaseRepository, IRepositoryFilters, IRepositoryMatchers } from '@common/repositories';
 import { CORE_TYPES } from '@core/core.ioc';
@@ -9,11 +8,11 @@ import { IUserRepository } from '../services';
 
 export const USER_REPOSITORY_MODEL = 'user';
 
-@injectable()
+@Provider()
 export class UserRepository implements IUserRepository {
     private readonly userModel: IBaseRepository<UserEntity>;
 
-    constructor(@inject(CORE_TYPES.DatabaseDriver) databaseDriver: IDatabaseDriver) {
+    constructor(@Inject(CORE_TYPES.DatabaseDriver) databaseDriver: IDatabaseDriver) {
         this.userModel = databaseDriver.getModel<UserEntity>(USER_REPOSITORY_MODEL);
     }
 

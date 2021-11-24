@@ -1,7 +1,5 @@
-import { injectable, inject } from 'inversify';
-
-import { ExistsException } from '@common/exceptions/exists.exception';
-import { NotFoundException } from '@common/exceptions/not-found.exception';
+import { Inject, Provider } from '@common/decorators';
+import { NotFoundException, ExistsException } from '@common/exceptions';
 import { IBaseRepository } from '@common/repositories';
 
 import { HashService } from '.';
@@ -16,10 +14,10 @@ export interface IUserRepository extends IBaseRepository<UserEntity> {
     getAutoSuggestUsers(loginSubstring: string, limit: number): Promise<UserEntity[]>;
 }
 
-@injectable()
+@Provider()
 export class UserService {
     constructor(
-        @inject(USER_TYPES.UserRepository) private userRepository: IUserRepository,
+        @Inject(USER_TYPES.UserRepository) private userRepository: IUserRepository,
         private hashService: HashService
     ) {}
 
