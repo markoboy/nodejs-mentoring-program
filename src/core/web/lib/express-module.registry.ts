@@ -16,7 +16,7 @@ export class ExpressModuleRegistry extends ModuleRegistry {
         routes: IRouteDefinition[],
         container: interfaces.Container
     ): void | Promise<void> {
-        console.log(`[Controller]:[${controller.path}] Registration for ${controller.target.constructor.name} started`);
+        console.log(`[Controller]:[${controller.path}] Registration for ${controller.target.name} started`);
         console.table(routes);
 
         const router = Router();

@@ -20,6 +20,7 @@ async function generateUsers(count: number): Promise<IUserEntity[]> {
     const users: IUserEntity[] = [user];
 
     for (let i = 0; i < count; i++) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ({ id, ...user } = await UserEntity.create(
             {
                 login: faker.internet.userName(),

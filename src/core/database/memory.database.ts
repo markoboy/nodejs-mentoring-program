@@ -1,7 +1,7 @@
 import { Provider } from '@common/decorators';
 import { IDatabaseDriver, IDatabaseModel } from '@common/drivers';
 import { IBaseEntity } from '@common/entities';
-import { ExistsException, NotFoundException } from '@common/exceptions';
+import { ExistsException } from '@common/exceptions';
 
 import { MemoryDatabaseModel } from './memory.database.model';
 
