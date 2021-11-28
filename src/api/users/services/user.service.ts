@@ -1,25 +1,25 @@
 import { Inject, Provider } from '@common/decorators';
-import { NotFoundException, ExistsException } from '@common/exceptions';
+import { IDatabaseDriver } from '@common/drivers';
+import { NotFoundException, BadRequestException } from '@common/exceptions';
 import { IBaseRepository } from '@common/repositories';
+import { CORE_TYPES } from '@core';
 
 import { HashService } from '.';
 import { IUserEntity, UserEntity } from '../entities';
-import { USER_TYPES } from '../user.ioc';
 
 export type IUserSafe = Omit<Required<IUserEntity>, 'password'> & {
     password?: null;
 };
 
-export interface IUserRepository extends IBaseRepository<UserEntity> {
-    getAutoSuggestUsers(loginSubstring: string, limit: number): Promise<UserEntity[]>;
-}
+export const USER_REPOSITORY_MODEL = 'user';
 
 @Provider()
 export class UserService {
-    constructor(
-        @Inject(USER_TYPES.UserRepository) private userRepository: IUserRepository,
-        private hashService: HashService
-    ) {}
+    private readonly userRepository: IBaseRepository<UserEntity>;
+
+    constructor(@Inject(CORE_TYPES.DatabaseDriver) databaseDriver: IDatabaseDriver, private hashService: HashService) {
+        this.userRepository = databaseDriver.getRepository<UserEntity>(USER_REPOSITORY_MODEL);
+    }
 
     async findById(id: string): Promise<IUserSafe> {
         const user = await this.userRepository.findById(id);
@@ -38,17 +38,17 @@ export class UserService {
         );
 
         if (existingUser.length) {
-            throw new ExistsException(`User with login: ${user.login} already exists`);
+            throw new BadRequestException(`User with login: ${user.login} already exists`);
         }
 
         const newUser = await UserEntity.create(user, this.hashService.hash);
 
-        const savedUser = await this.userRepository.save(newUser);
+        const createdUser = await this.userRepository.create(newUser);
 
-        return UserService.getSafeUser(savedUser);
+        return UserService.getSafeUser(createdUser);
     }
 
-    async updateOne(id: string, user: Partial<Omit<IUserEntity, 'id'>>): Promise<IUserSafe> {
+    async updateOne(id: string, user: Partial<Omit<IUserEntity, 'id'>>): Promise<boolean> {
         const existingUser = await this.userRepository.findById(id);
 
         if (!existingUser) {
@@ -63,29 +63,25 @@ export class UserService {
             user.password ? this.hashService.hash : undefined
         );
 
-        const updatedUser = await this.userRepository.updateOne(id, userEntity);
-
-        if (!updatedUser) {
-            throw new NotFoundException(`User with id: ${id} could not be updated`);
-        }
-
-        return UserService.getSafeUser(updatedUser);
+        return this.userRepository.updateOne(id, userEntity);
     }
 
-    async deleteOne(id: string): Promise<IUserSafe> {
-        const deletedUser = await this.userRepository.deleteOne(id);
-
-        if (!deletedUser) {
-            throw new NotFoundException(`User with id: ${id} was not found`);
-        }
-
-        return UserService.getSafeUser(deletedUser);
+    async deleteOne(id: string): Promise<boolean> {
+        return this.userRepository.deleteOne(id);
     }
 
     async getAutoSuggestUsers(loginSubstring: string, limit: number): Promise<IUserSafe[]> {
-        const users = await this.userRepository.getAutoSuggestUsers(loginSubstring, limit);
-
-        return users.map(UserService.getSafeUser);
+        return (
+            await this.userRepository.find(
+                {
+                    login: loginSubstring,
+                    isDeleted: false
+                },
+                {
+                    limit
+                }
+            )
+        )?.map(UserService.getSafeUser);
     }
 
     public static getSafeUser(user: UserEntity): IUserSafe {

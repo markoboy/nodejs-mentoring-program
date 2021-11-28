@@ -15,10 +15,19 @@ export interface IRepositoryFilters {
     limit?: number;
 }
 
-export interface IBaseRepository<T extends IBaseEntity = IBaseEntity> {
+export interface IReadRepository<T extends IBaseEntity = IBaseEntity> {
     find(matchers?: IRepositoryMatchers<T>, filters?: IRepositoryFilters): Promise<T[]>;
     findById(id: T['id']): Promise<T | null>;
-    save(entity: T): Promise<T>;
-    updateOne(id: T['id'], partialEntity: Partial<Omit<T, 'id'>>): Promise<T | null>;
-    deleteOne(id: T['id']): Promise<T | null>;
+}
+
+export interface IWriteRepository<T extends IBaseEntity = IBaseEntity> {
+    create(entity: Partial<T>): Promise<T>;
+    updateOne(id: T['id'], partialEntity: Partial<Omit<T, 'id'>>): Promise<boolean>;
+    deleteOne(id: T['id']): Promise<boolean>;
+}
+
+export interface IBaseRepository<T extends IBaseEntity = IBaseEntity> extends IReadRepository<T>, IWriteRepository<T> {}
+
+export interface IRepositoryConstructable<T extends IBaseEntity = IBaseEntity> {
+    new (entityName: string): IBaseRepository<T>;
 }

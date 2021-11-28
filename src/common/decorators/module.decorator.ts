@@ -6,8 +6,9 @@ const META_MODULE = Symbol.for('MetaModule');
 export type IProviderTarget<T> = interfaces.Newable<T>;
 
 export interface IProviderDefinition<T = unknown> {
-    type: string | symbol;
-    target: IProviderTarget<T>;
+    type: string | symbol | IProviderTarget<T>;
+    target?: IProviderTarget<T>;
+    value?: unknown;
 }
 
 export type IProviderTargetTypes<T = unknown> = IProviderDefinition<T> | IProviderTarget<T>;
@@ -33,7 +34,7 @@ export interface IModuleDefinition {
 }
 
 export function getModuleMetadata(constructor: IImportTarget): IModuleDefinition {
-    const moduleMeta: IModuleDefinition = Reflect.getMetadata(META_MODULE, constructor);
+    const moduleMeta: IModuleDefinition = Reflect.getOwnMetadata(META_MODULE, constructor);
 
     return moduleMeta ?? {};
 }

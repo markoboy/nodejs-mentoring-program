@@ -30,7 +30,7 @@ export class UserController {
     }
 
     @Patch('/:id')
-    async update(httpRequest: HttpRequest): Promise<IUserSafe> {
+    async update(httpRequest: HttpRequest): Promise<boolean> {
         const { id } = await FindOneUserDTO.from(httpRequest.params);
         const updateUser = await UpdateUserDTO.from(httpRequest.body);
 
@@ -38,7 +38,7 @@ export class UserController {
     }
 
     @Delete('/:id')
-    async delete(httpRequest: HttpRequest): Promise<IUserSafe> {
+    async delete(httpRequest: HttpRequest): Promise<boolean> {
         const { id } = await FindOneUserDTO.from(httpRequest.params);
 
         return this.userService.deleteOne(id);

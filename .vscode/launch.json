@@ -13,7 +13,9 @@
       ],
       "runtimeArgs": [
         "-r",
-        "ts-node/register"
+        "ts-node/register",
+        "-r",
+        "./scripts/register-dev.js"
       ],
       "cwd": "${workspaceRoot}",
       "protocol": "inspector",

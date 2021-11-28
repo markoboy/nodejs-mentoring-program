@@ -9,10 +9,12 @@ import {
     IExportTarget,
     IModuleDefinition,
     IImportTarget,
-    getModuleMetadata
+    getModuleMetadata,
+    IProviderDefinition
 } from '@common/decorators';
 import { isProviderDefinition } from '@common/utils';
 import { CORE_TYPES } from '@core/core.ioc';
+import { BadRequestException } from '@common/exceptions';
 
 export abstract class ModuleRegistry {
     protected abstract registerController(
@@ -58,12 +60,20 @@ export abstract class ModuleRegistry {
      * @param container The container to register the provider to
      */
     private registerProvider(provider: IExportTarget, container: interfaces.Container | null): void {
-        if (!container) {
+        if (!container || !provider) {
             return;
         }
 
         if (isProviderDefinition(provider)) {
-            container.bind(provider.type).to(provider.target).inSingletonScope();
+            if (provider.target) {
+                container.bind(provider.type).to(provider.target).inSingletonScope();
+            } else if (provider.value) {
+                container.bind(provider.type).toConstantValue(provider.value);
+            } else {
+                throw new BadRequestException(
+                    `${String(provider.type)} is not a valid provider. "target" or "value" is required.`
+                );
+            }
         } else {
             container.bind(provider).toSelf().inSingletonScope();
         }
@@ -72,7 +82,7 @@ export abstract class ModuleRegistry {
     /**
      * Registers all providers to the container and exports to the parent container.
      *
-     * @param param0 The exports and providers to register
+     * @param providers The exports and providers to register
      * @param container The container to register providers to
      */
     private registerProviders(
@@ -80,10 +90,27 @@ export abstract class ModuleRegistry {
         container: interfaces.Container
     ): void {
         providers?.forEach((provider) => {
-            if (exported.includes(provider)) {
-                this.registerProvider(provider, container.parent);
-            } else {
-                this.registerProvider(provider, container);
+            this.registerProvider(provider, container);
+        });
+
+        exported.forEach((provider) => {
+            let providerType: IProviderDefinition['type'] | null = null;
+
+            if (isProviderDefinition(provider)) {
+                providerType = provider.type;
+            } else if (provider) {
+                providerType = provider;
+            }
+
+            // Register the same instance for the exported dependencies
+            if (providerType) {
+                this.registerProvider(
+                    {
+                        type: providerType,
+                        value: container.get(providerType)
+                    },
+                    container.parent
+                );
             }
         });
     }

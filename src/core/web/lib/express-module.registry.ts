@@ -22,11 +22,11 @@ export class ExpressModuleRegistry extends ModuleRegistry {
         const router = Router();
 
         routes.forEach((route) => {
-            router[route.method](route.path, async (req, res, next) => {
-                const controllerInstance = container.get<BaseController>(
-                    controller.target as unknown as typeof BaseController
-                );
+            const controllerInstance = container.get<BaseController>(
+                controller.target as unknown as typeof BaseController
+            );
 
+            router[route.method](route.path, async (req, res, next) => {
                 try {
                     console.time(`[${controller.target.name}]:[${route.methodName}] Request route handler`);
 

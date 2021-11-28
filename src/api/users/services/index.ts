@@ -1,2 +1,2 @@
 export * from './hash.service';
-export * from './users.service';
+export * from './user.service';
