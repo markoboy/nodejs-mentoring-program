@@ -16,7 +16,6 @@ export class KnexDatabase implements IDatabaseDriver {
 
     constructor() {
         this.knex = createKnex(knexConfig);
-        console.log(this.knex);
     }
 
     getRepository<T extends IBaseEntity>(entityName: string): IBaseRepository<T> {
