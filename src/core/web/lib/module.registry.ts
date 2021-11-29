@@ -1,20 +1,20 @@
 import { interfaces } from 'inversify';
 
 import {
-    IControllerDefinition,
-    IRouteDefinition,
-    IControllerTarget,
     getControllerMetadata,
-    getRoutesMetadata,
-    IExportTarget,
-    IModuleDefinition,
-    IImportTarget,
     getModuleMetadata,
-    IProviderDefinition
+    getRoutesMetadata,
+    IControllerDefinition,
+    IControllerTarget,
+    IExportTarget,
+    IImportTarget,
+    IModuleDefinition,
+    IProviderDefinition,
+    IRouteDefinition
 } from '@common/decorators';
-import { isProviderDefinition } from '@common/utils';
-import { CORE_TYPES } from '@core/core.ioc';
 import { BadRequestException } from '@common/exceptions';
+import { isProviderDefinition } from '@common/utils';
+import { CORE_TYPES, CORE_INTERFACES } from '@core';
 
 export abstract class ModuleRegistry {
     protected abstract registerController(
@@ -147,7 +147,7 @@ export abstract class ModuleRegistry {
         const { controllers, exports, imports, prefix = '', providers } = getModuleMetadata(coreModule);
 
         const modulePrefix = this.getModulePrefix(prefix, container);
-        container.bind(CORE_TYPES.ModulePrefix).toConstantValue(modulePrefix);
+        container.bind<CORE_INTERFACES.ModulePrefix>(CORE_TYPES.ModulePrefix).toConstantValue(modulePrefix);
 
         this.registerProviders({ exports, providers }, container);
 

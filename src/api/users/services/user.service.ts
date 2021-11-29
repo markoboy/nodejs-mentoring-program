@@ -1,8 +1,7 @@
 import { Inject, Provider } from '@common/decorators';
-import { IDatabaseDriver } from '@common/drivers';
 import { NotFoundException, BadRequestException } from '@common/exceptions';
 import { IBaseRepository } from '@common/repositories';
-import { CORE_TYPES } from '@core';
+import { CORE_TYPES, CORE_INTERFACES } from '@core';
 
 import { HashService } from '.';
 import { IUserEntity, UserEntity } from '../entities';
@@ -11,13 +10,16 @@ export type IUserSafe = Omit<Required<IUserEntity>, 'password'> & {
     password?: null;
 };
 
-export const USER_REPOSITORY_MODEL = 'user';
+export const USER_REPOSITORY_MODEL = 'users';
 
 @Provider()
 export class UserService {
     private readonly userRepository: IBaseRepository<UserEntity>;
 
-    constructor(@Inject(CORE_TYPES.DatabaseDriver) databaseDriver: IDatabaseDriver, private hashService: HashService) {
+    constructor(
+        @Inject(CORE_TYPES.DatabaseDriver) databaseDriver: CORE_INTERFACES.DatabaseDriver,
+        private hashService: HashService
+    ) {
         this.userRepository = databaseDriver.getRepository<UserEntity>(USER_REPOSITORY_MODEL);
     }
 

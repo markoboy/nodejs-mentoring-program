@@ -1,10 +1,10 @@
 import { Module } from '@common/decorators';
 import { CORE_TYPES } from '@core';
-import { MemoryDatabase } from './memory';
+import { KnexDatabase } from './knex';
 
 const databaseProvider = {
     type: CORE_TYPES.DatabaseDriver,
-    target: MemoryDatabase
+    target: KnexDatabase
 };
 
 @Module({

@@ -1,9 +1,11 @@
-import knex, { Knex } from 'knex';
-import dotenv from 'dotenv';
 import path from 'path';
-import { getEnvBoolean, getEnvNumber } from '@common/utils';
+import knex, { Knex } from 'knex';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.dev.env') });
+import { Environment, loadEnv } from '@config';
+
+loadEnv();
+
+const { pg, db } = Environment.get();
 
 const migrationsDirectory = path.resolve(__dirname, 'migrations');
 const migrationStubPath = path.resolve(__dirname, 'migration.stub.ts');
@@ -13,19 +15,16 @@ const seedsStubPath = path.resolve(__dirname, 'seed.stub.ts');
 
 export const knexConfig: Knex.Config = {
     client: 'pg',
-    version: process.env.PG_VERSION,
+    version: pg.version,
     connection: {
-        host: process.env.PG_HOST,
-        port: getEnvNumber('PG_PORT', 5432),
-        user: process.env.PG_USER,
-        password: process.env.PG_PASSWORD,
-        database: process.env.PG_DATABASE
+        host: pg.host,
+        port: pg.port,
+        user: pg.user,
+        password: pg.password,
+        database: pg.database
     },
-    pool: {
-        min: getEnvNumber('DB_POOL_MIN', 2),
-        max: getEnvNumber('DB_POOL_MAX', 10)
-    },
-    debug: getEnvBoolean('DB_DEBUG'),
+    pool: db.pool,
+    debug: db.debug,
     migrations: {
         directory: migrationsDirectory,
         extension: 'ts',

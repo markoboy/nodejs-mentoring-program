@@ -7,7 +7,7 @@ export interface IRepositoryMatcherField<T> {
 
 export type IRepositoryMatcher<T> = T | IRepositoryMatcherField<T>;
 
-export type IRepositoryMatchers<T extends IBaseEntity> = {
+export type IRepositoryMatchers<T extends IBaseEntity = IBaseEntity> = {
     [K in keyof T]?: IRepositoryMatcher<T[K]>;
 };
 
