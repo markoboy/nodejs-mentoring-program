@@ -1,13 +1,12 @@
-import { IDatabaseModel } from '@common/drivers';
 import { IBaseEntity } from '@common/entities';
-import { ExistsException } from '@common/exceptions';
-import { IRepositoryFilters, IRepositoryMatcher, IRepositoryMatchers } from '@common/repositories';
+import { BadRequestException, NotFoundException } from '@common/exceptions';
+import { IBaseRepository, IRepositoryFilters, IRepositoryMatcher, IRepositoryMatchers } from '@common/repositories';
 import { isRepositoryMatcherField } from '@common/utils';
 
-export class MemoryDatabaseModel<T extends IBaseEntity> implements IDatabaseModel<T> {
+export class MemoryRepository<T extends IBaseEntity> implements IBaseRepository<T> {
     private readonly store: Map<T['id'], T> = new Map();
 
-    constructor(protected readonly model: string) {}
+    constructor(protected readonly entityName: string) {}
 
     async find(matchers?: IRepositoryMatchers<T>, filters?: IRepositoryFilters): Promise<T[]> {
         const results: T[] = [];
@@ -18,7 +17,7 @@ export class MemoryDatabaseModel<T extends IBaseEntity> implements IDatabaseMode
         while (!done) {
             const next = storeIterator.next();
 
-            if (next.value && MemoryDatabaseModel.matches<T>(next.value, matchers)) {
+            if (next.value && MemoryRepository.matches<T>(next.value, matchers)) {
                 results.push(next.value);
             }
 
@@ -34,21 +33,24 @@ export class MemoryDatabaseModel<T extends IBaseEntity> implements IDatabaseMode
         return item ?? null;
     }
 
-    async save(entity: T): Promise<T> {
+    async create(entity: T): Promise<T> {
         if (this.store.has(entity.id)) {
-            throw new ExistsException(`${this.model} with id: ${entity.id} already exists`);
+            throw new BadRequestException(`${this.entityName} with id: ${entity.id} already exists`);
         }
 
         this.store.set(entity.id, entity);
 
-        return this.store.get(entity.id) ?? entity;
+        return {
+            ...entity,
+            id: entity.id
+        };
     }
 
-    async updateOne(id: T['id'], partialEntity: Partial<Omit<T, 'id'>>): Promise<T | null> {
+    async updateOne(id: T['id'], partialEntity: Partial<Omit<T, 'id'>>): Promise<boolean> {
         const existingItem = this.store.get(id);
 
         if (!existingItem) {
-            return null;
+            throw new NotFoundException(`${this.entityName} with id: ${id} does not exist`);
         }
 
         this.store.set(id, {
@@ -56,14 +58,14 @@ export class MemoryDatabaseModel<T extends IBaseEntity> implements IDatabaseMode
             ...partialEntity
         });
 
-        return this.store.get(id) ?? null;
+        return true;
     }
 
-    async deleteOne(id: T['id']): Promise<T | null> {
+    async deleteOne(id: T['id']): Promise<boolean> {
         const existingItem = this.store.get(id);
 
         if (!existingItem) {
-            return null;
+            throw new NotFoundException(`${this.entityName} with id: ${id} does not exist`);
         }
 
         this.store.set(id, {
@@ -71,7 +73,7 @@ export class MemoryDatabaseModel<T extends IBaseEntity> implements IDatabaseMode
             isDeleted: true
         });
 
-        return this.store.get(id) ?? null;
+        return true;
     }
 
     protected static stringMatches(value: unknown, valueToCompare: unknown, exact: boolean): boolean {
@@ -109,7 +111,7 @@ export class MemoryDatabaseModel<T extends IBaseEntity> implements IDatabaseMode
                 }
 
                 // Check string types
-                const stringMatches = MemoryDatabaseModel.stringMatches(entityField, value, exact);
+                const stringMatches = MemoryRepository.stringMatches(entityField, value, exact);
 
                 // Check other types. Only primitive values are supported.
                 const otherMatches = typeof value !== 'string' && entityField === value;

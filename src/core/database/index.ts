@@ -1,1 +1,1 @@
-export * from './memory.database';
+export * from './database.module';

@@ -1,6 +1,6 @@
 import { HttpRequestMethod } from '@common/controllers';
 
-export const META_ROUTE = Symbol.for('MetaRoute');
+const META_ROUTE = Symbol.for('MetaRoute');
 
 export enum HttpStatus {
     OK = 200,
@@ -17,6 +17,12 @@ export interface IRouteDefinition {
     methodName: string;
     path: string;
     status: HttpStatus;
+}
+
+export function getRoutesMetadata(constructor: object): IRouteDefinition[] {
+    const routesMetadata: IRouteDefinition[] = Reflect.getOwnMetadata(META_ROUTE, constructor);
+
+    return routesMetadata ?? {};
 }
 
 const routeDecoratorFactory = (method: HttpRequestMethod): IRouteDecorator => {

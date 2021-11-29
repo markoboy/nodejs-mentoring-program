@@ -1,3 +1,5 @@
 node_modules
-temp/example.json
+temp/*
+!temp/example.csv
 dist
+.env

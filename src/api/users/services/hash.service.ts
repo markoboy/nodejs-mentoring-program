@@ -1,6 +1,7 @@
 import crypto from 'crypto';
-import { injectable } from 'inversify';
 import { promisify } from 'util';
+
+import { Provider } from '@common/decorators';
 
 import { HashUserPassword } from '../entities';
 
@@ -13,7 +14,7 @@ export interface IHashService {
     verify(password: string, hash: string): Promise<boolean>;
 }
 
-@injectable()
+@Provider()
 export class HashService implements IHashService {
     /**
      * Hash a password into a tuple of salt:hash using crypto scrypt algorithm.

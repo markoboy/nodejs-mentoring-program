@@ -335,7 +335,12 @@
         "@typescript-eslint/explicit-function-return-type": 1,
         "@typescript-eslint/no-shadow": 2,
         // Prettier
-        "prettier/prettier": 2
+        "prettier/prettier": [
+            "error",
+            {
+                "endOfLine": "auto"
+            }
+        ]
     },
     "globals": {
         "$": true,
@@ -344,5 +349,7 @@
         "__DEVTOOLS__": true,
         "PUBLIC_URL": true
     },
-    "ignorePatterns": ["scripts"]
+    "ignorePatterns": [
+        "scripts"
+    ]
 }

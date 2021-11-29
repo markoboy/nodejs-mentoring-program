@@ -1,53 +1,52 @@
-import { AsyncContainerModule, ContainerModule, decorate, injectable } from 'inversify';
+import { decorate, injectable, interfaces } from 'inversify';
 import { IControllerTarget } from '.';
 
-export const META_MODULE = Symbol.for('MetaModule');
+const META_MODULE = Symbol.for('MetaModule');
 
-export interface IServiceTarget {
-    new (...args: never[]): unknown;
+export type IProviderTarget<T> = interfaces.Newable<T>;
+
+export interface IProviderDefinition<T = unknown> {
+    type: string | symbol | IProviderTarget<T>;
+    target?: IProviderTarget<T>;
+    value?: unknown;
 }
 
-export interface IServiceDefinition {
-    type: string | symbol;
-    target: IServiceTarget;
-}
+export type IProviderTargetTypes<T = unknown> = IProviderDefinition<T> | IProviderTarget<T>;
+
+export type IImportTarget<T = unknown> = interfaces.Newable<T>;
+
+export type IExportTarget<T = unknown> = IProviderTargetTypes<T>;
 
 export interface IModuleOptions {
-    controllers: IControllerTarget[];
-    services: (IServiceTarget | IServiceDefinition)[];
+    controllers?: IControllerTarget[];
+    exports?: IExportTarget[];
+    imports?: IImportTarget[];
+    prefix?: string;
+    providers?: IProviderTargetTypes[];
 }
 
 export interface IModuleDefinition {
-    container: AsyncContainerModule | ContainerModule;
-    controllers: IControllerTarget[];
+    controllers?: IControllerTarget[];
+    exports?: IExportTarget[];
+    imports?: IImportTarget[];
+    prefix?: string;
+    providers?: IProviderTargetTypes[];
 }
 
-function isServiceDefinition(definition: IServiceDefinition | IServiceTarget): definition is IServiceDefinition {
-    return typeof definition !== 'function';
+export function getModuleMetadata(constructor: IImportTarget): IModuleDefinition {
+    const moduleMeta: IModuleDefinition = Reflect.getOwnMetadata(META_MODULE, constructor);
+
+    return moduleMeta ?? {};
 }
 
-function getModuleContainer({ services, controllers }: IModuleOptions): ContainerModule {
-    return new ContainerModule((bind) => {
-        services.forEach((service) => {
-            if (isServiceDefinition(service)) {
-                bind(service.type).to(service.target).inSingletonScope();
-            } else {
-                bind(service).toSelf().inSingletonScope();
-            }
-        });
-
-        controllers.forEach((controller) => {
-            bind(controller).toSelf().inRequestScope();
-        });
-    });
-}
-
-export const Module = ({ controllers, services }: IModuleOptions): ClassDecorator => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (target: any): void => {
+export const Module = ({ controllers, exports, imports, prefix, providers }: IModuleOptions): ClassDecorator => {
+    return (target): void => {
         const moduleMetadata: IModuleDefinition = {
-            container: getModuleContainer({ controllers, services }),
-            controllers
+            controllers,
+            exports,
+            imports,
+            prefix,
+            providers
         };
 
         decorate(injectable(), target);
