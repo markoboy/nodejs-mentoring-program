@@ -2,10 +2,10 @@ import 'reflect-metadata';
 
 import { ExpressApplication } from '@core/web';
 import { AppModule } from 'app.module';
-import { Environment, loadEnv } from '@config';
+import { Environment } from '@config';
 
 async function main(): Promise<void> {
-    loadEnv();
+    Environment.load();
 
     const application = new ExpressApplication(AppModule);
     await application.setup();

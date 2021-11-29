@@ -4,23 +4,32 @@ import path from 'path';
 import { getEnvBoolean, getEnvNumber, getEnvString } from '@common/utils';
 
 import { IEnvironment, INodeEnvironment } from './environment.interface';
+import { BadRequestException } from '@common/exceptions';
 
 const NODE_ENV = getEnvString<INodeEnvironment>('NODE_ENV', 'development');
 
-export function loadEnv(): void {
-    let envFile = '.dev.env';
+export class Environment {
+    private static loaded: boolean;
 
-    if (NODE_ENV === 'production') {
-        envFile = '.env';
+    static load(): void {
+        let envFile = '.dev.env';
+
+        if (NODE_ENV === 'production') {
+            envFile = '.env';
+        }
+
+        dotenv.config({ path: path.resolve(__dirname, envFile) });
+
+        this.loaded = true;
     }
 
-    dotenv.config({ path: path.resolve(__dirname, envFile) });
-}
-
-export class Environment {
     static get(key: keyof IEnvironment): IEnvironment[typeof key];
     static get(): IEnvironment;
     static get(key?: keyof IEnvironment): IEnvironment | IEnvironment[keyof IEnvironment] {
+        if (!this.loaded) {
+            throw new BadRequestException('Please load the environment by calling `Environment.load()`!');
+        }
+
         const env: IEnvironment = {
             nodeEnv: NODE_ENV,
             port: getEnvNumber('PORT', 3000),

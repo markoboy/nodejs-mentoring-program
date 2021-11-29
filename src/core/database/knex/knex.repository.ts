@@ -33,6 +33,7 @@ export class KnexRepository<T extends IBaseEntity> implements IBaseRepository<T>
         return item ?? null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async create({ id, ...entity }: T): Promise<T> {
         const query = this.knex.insert<T>(entity).into<T>(this.entityName).returning('id');
 

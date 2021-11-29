@@ -1,9 +1,9 @@
 import path from 'path';
 import knex, { Knex } from 'knex';
 
-import { Environment, loadEnv } from '@config';
+import { Environment } from '@config';
 
-loadEnv();
+Environment.load();
 
 const { pg, db } = Environment.get();
 
