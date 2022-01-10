@@ -38,6 +38,12 @@
       "@config/*": [
         "config/*"
       ],
+      "@constants": [
+        "constants"
+      ],
+      "@constants/*": [
+        "constants/*"
+      ],
       "@core": [
         "core"
       ],
