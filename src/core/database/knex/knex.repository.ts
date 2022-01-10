@@ -144,7 +144,7 @@ export class KnexRepository<T extends IBaseEntity> implements IBaseRepository<T>
         field: IRepositoryMatcher<Knex.Value | undefined>
     ): IRepositoryMatcherField<Knex.Value | undefined> {
         let exact = false;
-        let value: Knex.Value | undefined;
+        let value: IRepositoryMatcherField<Knex.Value | undefined>['value'];
 
         // Check if we should do exact matching or partial matching
         if (isRepositoryMatcherField(field)) {
@@ -178,7 +178,10 @@ export class KnexRepository<T extends IBaseEntity> implements IBaseRepository<T>
             const whereMethod = appliedWhere ? 'andWhere' : 'where';
 
             // Check exact match when exact is set or the value is not a string
-            if (exact || typeof value !== 'string') {
+            if (Array.isArray(value)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                queryBuilder.whereIn(key as any, value as any);
+            } else if (exact || typeof value !== 'string') {
                 queryBuilder[whereMethod]({ [key]: value });
             } else {
                 queryBuilder[whereMethod](key, 'like', `%${value}%`);

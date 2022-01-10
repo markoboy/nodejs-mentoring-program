@@ -1,7 +1,7 @@
 import { IBaseEntity } from '@common/entities';
 
 export interface IRepositoryMatcherField<T> {
-    value: T;
+    value: T | T[];
     exact?: boolean;
 }
 

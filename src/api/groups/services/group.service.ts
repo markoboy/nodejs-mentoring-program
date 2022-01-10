@@ -55,9 +55,7 @@ export class GroupService {
             const permissionRepo =
                 this.databaseDriver.getRepository<{ id: string; name: IGroupPermission }>(PERMISSION_REPOSITORY_MODEL);
 
-            // TODO: Update find matchers with `in` operators for matching multiple values
-            const dbPermissions = await permissionRepo.find();
-            const relatedPermissions = dbPermissions.filter((p) => permissions.includes(p.name));
+            const relatedPermissions = await permissionRepo.find({ name: { value: permissions } });
 
             await this.groupRepository.addManyRelation(
                 {
