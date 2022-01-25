@@ -25,6 +25,8 @@ export async function up(knex: Knex): Promise<void> {
 
         table.uuid(groupId).unsigned();
         table.foreign(groupId).references('id').inTable(GROUP_REPOSITORY_MODEL).onDelete('CASCADE');
+
+        table.primary([userId, groupId]);
     });
 
     // Permission table with many-to-many relation on group table
@@ -39,6 +41,8 @@ export async function up(knex: Knex): Promise<void> {
 
         table.uuid(permissionId).unsigned();
         table.foreign(permissionId).references('id').inTable(PERMISSION_REPOSITORY_MODEL).onDelete('CASCADE');
+
+        table.primary([groupId, permissionId]);
     });
 }
 
