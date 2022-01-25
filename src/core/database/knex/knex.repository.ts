@@ -50,10 +50,10 @@ export class KnexRepository<T extends IBaseEntity> implements IBaseRepository<T>
         return storedEntity;
     }
 
-    async updateOne(id: T['id'], partialEntity: Partial<T>): Promise<boolean> {
+    async updateOne(id: T['id'], partialEntity: Partial<T>, trx?: ITransaction<Knex.Transaction>): Promise<boolean> {
         const query = this.knex.update(partialEntity).from(this.entityName).where({ id });
 
-        const affectedItems = await KnexRepository.runQuery(query);
+        const affectedItems = await KnexRepository.runQuery(query, trx);
 
         if (!affectedItems) {
             throw new NotFoundException(`${this.entityName} with id: ${id} does not exist`);
@@ -86,6 +86,57 @@ export class KnexRepository<T extends IBaseEntity> implements IBaseRepository<T>
         return affectedItems === 1;
     }
 
+    async getManyRelation<R>(
+        { id, relationEntityName, relationName }: Omit<IManyEntityRelation<T>, 'relationIds'>,
+        trx?: ITransaction<Knex.Transaction>
+    ): Promise<R[]> {
+        const entityIdColumn = generateModelId(this.entityName);
+        const relationIdColumn = generateModelId(relationEntityName);
+
+        const query = this.knex
+            .select(`${relationEntityName}.*`)
+            .from(relationEntityName)
+            .innerJoin(relationName, `${relationEntityName}.id`, `${relationName}.${relationIdColumn}`)
+            .innerJoin(this.entityName, `${this.entityName}.id`, `${relationName}.${entityIdColumn}`)
+            .where(`${this.entityName}.id`, id);
+
+        return KnexRepository.runQuery(query, trx);
+    }
+
+    async updateManyRelation(
+        { id, relationEntityName, relationIds, relationName }: IManyEntityRelation<T>,
+        trx?: ITransaction<Knex.Transaction>
+    ): Promise<boolean> {
+        const entityIdColumn = generateModelId(this.entityName);
+        const relationIdColumn = generateModelId(relationEntityName);
+
+        // Delete relations if ids are not included
+        const deleteQuery = this.knex
+            .delete()
+            .from(relationName)
+            .where(entityIdColumn, id)
+            .whereNotIn(relationIdColumn, relationIds);
+
+        // Add relations and ignore any ids that are already in the table
+        const rows = relationIds.map((relationId) => ({ [entityIdColumn]: id, [relationIdColumn]: relationId }));
+
+        const addQuery = this.knex.insert(rows).into(relationName).onConflict().ignore();
+
+        if (trx) {
+            await KnexRepository.runQuery(deleteQuery, trx);
+            await KnexRepository.runQuery(addQuery, trx);
+
+            return true;
+        }
+
+        return this.transaction(async (t) => {
+            await KnexRepository.runQuery(deleteQuery, t);
+            await KnexRepository.runQuery(addQuery, t);
+
+            return true;
+        });
+    }
+
     async addManyRelation(
         { id, relationEntityName, relationIds, relationName }: IManyEntityRelation<T>,
         trx?: ITransaction<Knex.Transaction>
@@ -100,17 +151,15 @@ export class KnexRepository<T extends IBaseEntity> implements IBaseRepository<T>
         const rows = relationIds.map((relationId) => ({ [entityIdColumn]: id, [relationIdColumn]: relationId }));
         const chunkSize = 30;
 
-        if (trx) {
-            const query = this.knex.batchInsert(relationName, rows, chunkSize);
+        const query = this.knex.batchInsert(relationName, rows, chunkSize);
 
+        if (trx) {
             await KnexRepository.runQuery(query, trx);
 
             return true;
         }
 
         return this.transaction(async (t) => {
-            const query = this.knex.batchInsert(relationName, rows, chunkSize).transacting(t.trx);
-
             await KnexRepository.runQuery(query, t);
 
             return true;

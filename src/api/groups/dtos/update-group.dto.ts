@@ -1,6 +1,6 @@
 import { ValidationException } from '@common/exceptions';
 import Joi from 'joi';
-import { groupSchema, IGroupPermission } from '../entities';
+import { groupSchema, IPermission } from '../entities';
 
 const updateGroupSchema = Joi.object<UpdateGroupDTO, true>({
     name: groupSchema.$_reach(['name']).optional() as Joi.StringSchema,
@@ -10,7 +10,7 @@ const updateGroupSchema = Joi.object<UpdateGroupDTO, true>({
 export class UpdateGroupDTO {
     readonly name?: string;
 
-    readonly permissions?: Array<IGroupPermission>;
+    readonly permissions?: Array<IPermission>;
 
     constructor({ name, permissions }: UpdateGroupDTO) {
         this.name = name;

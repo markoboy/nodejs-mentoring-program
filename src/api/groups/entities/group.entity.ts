@@ -3,26 +3,13 @@ import Joi from 'joi';
 import { BaseEntity, IBaseEntity } from '@common/entities';
 import { ValidationException } from '@common/exceptions';
 
-import * as GroupPermission from '../constants/group-permissions';
-
-type IGroupPermissionKeys = keyof typeof GroupPermission;
-
-export type IGroupPermission = typeof GroupPermission[IGroupPermissionKeys];
+import { validPermissions, IPermission } from './permission.entity';
 
 export interface IGroupEntity extends IBaseEntity {
     name: string;
 
-    permissions: Array<IGroupPermission>;
+    permissions: Array<IPermission>;
 }
-
-const validPermissions = (Object.keys(GroupPermission) as Array<IGroupPermissionKeys>).reduce<Array<IGroupPermission>>(
-    (acc, key) => {
-        acc.push(GroupPermission[key]);
-
-        return acc;
-    },
-    []
-);
 
 export const groupSchema = Joi.object<IGroupEntity, true>({
     id: Joi.string().required(),
@@ -37,7 +24,7 @@ export const groupSchema = Joi.object<IGroupEntity, true>({
 export class GroupEntity extends BaseEntity implements IGroupEntity {
     readonly name: string;
 
-    readonly permissions: Array<IGroupPermission>;
+    readonly permissions: Array<IPermission>;
 
     protected constructor({ id, name, permissions }: IGroupEntity) {
         super({ id });

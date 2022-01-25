@@ -1,10 +1,10 @@
-import { IGroupPermission } from '@api/groups/entities';
+import { IPermission } from '@api/groups/entities';
 import { GROUP_REPOSITORY_MODEL, PERMISSION_REPOSITORY_MODEL } from '@constants';
 import { Knex } from 'knex';
 import { DELETE, READ, SHARE, WRITE, UPLOAD_FILES } from '@api/groups/constants';
 
 function generatePermissions(): { name: string }[] {
-    const values: IGroupPermission[] = [DELETE, READ, SHARE, WRITE, UPLOAD_FILES];
+    const values: IPermission[] = [DELETE, READ, SHARE, WRITE, UPLOAD_FILES];
 
     return values.map((name) => ({ name }));
 }

@@ -1,7 +1,9 @@
+import isEqual from 'lodash.isequal';
+
 import { IUserEntity } from '@api/users/entities';
 import { Inject, Provider } from '@common/decorators';
-import { NotFoundException, BadRequestException } from '@common/exceptions';
-import { IBaseRepository } from '@common/repositories';
+import { BadRequestException, NotFoundException } from '@common/exceptions';
+import { IBaseRepository, ITransaction } from '@common/repositories';
 import {
     GROUP_PERMISSION_REPOSITORY_MODEL,
     GROUP_REPOSITORY_MODEL,
@@ -9,20 +11,30 @@ import {
     USER_GROUP_REPOSITORY_MODEL,
     USER_REPOSITORY_MODEL
 } from '@constants';
-import { CORE_TYPES, CORE_INTERFACES } from '@core';
+import { CORE_INTERFACES, CORE_TYPES } from '@core';
 
-import { IGroupEntity, GroupEntity, IGroupPermission } from '../entities';
+import { GroupEntity, IGroupEntity, IPermissionEntity } from '../entities';
 
 @Provider()
 export class GroupService {
     private readonly groupRepository: IBaseRepository<GroupEntity>;
 
+    private readonly permissionRepository: IBaseRepository<IPermissionEntity>;
+
     constructor(@Inject(CORE_TYPES.DatabaseDriver) private readonly databaseDriver: CORE_INTERFACES.DatabaseDriver) {
         this.groupRepository = databaseDriver.getRepository<GroupEntity>(GROUP_REPOSITORY_MODEL);
+        this.permissionRepository = this.databaseDriver.getRepository<IPermissionEntity>(PERMISSION_REPOSITORY_MODEL);
     }
 
     async find(): Promise<IGroupEntity[]> {
-        return this.groupRepository.find();
+        const groups = await this.groupRepository.find();
+
+        const populatedGroups: IGroupEntity[] = [];
+        for (const group of groups) {
+            populatedGroups.push(await this.getGroupWithPermissions(group));
+        }
+
+        return populatedGroups;
     }
 
     async findById(id: string): Promise<IGroupEntity> {
@@ -32,7 +44,7 @@ export class GroupService {
             throw new NotFoundException(`Group with id: ${id} was not found`);
         }
 
-        return group;
+        return this.getGroupWithPermissions(group);
     }
 
     async create(group: Omit<IGroupEntity, 'id' | 'isDeleted'>): Promise<IGroupEntity> {
@@ -52,10 +64,7 @@ export class GroupService {
 
             const entity = await this.groupRepository.create(groupEntity, trx);
 
-            const permissionRepo =
-                this.databaseDriver.getRepository<{ id: string; name: IGroupPermission }>(PERMISSION_REPOSITORY_MODEL);
-
-            const relatedPermissions = await permissionRepo.find({ name: { value: permissions } });
+            const relatedPermissions = await this.permissionRepository.find({ name: { value: permissions } });
 
             await this.groupRepository.addManyRelation(
                 {
@@ -72,18 +81,36 @@ export class GroupService {
     }
 
     async updateOne(id: string, group: Partial<Omit<IGroupEntity, 'id'>>): Promise<boolean> {
-        const existingGroup = await this.groupRepository.findById(id);
+        return this.groupRepository.transaction<boolean>(async (trx) => {
+            const existingGroup = await this.groupRepository.findById(id);
 
-        if (!existingGroup) {
-            throw new NotFoundException(`Group with id: ${id} was not found`);
-        }
+            if (!existingGroup) {
+                throw new NotFoundException(`Group with id: ${id} was not found`);
+            }
 
-        const groupEntity = await GroupEntity.create({
-            ...existingGroup,
-            ...group
+            const groupEntity = await GroupEntity.create({
+                ...(await this.getGroupWithPermissions(existingGroup, trx)),
+                ...group
+            });
+
+            const hasChangedPermissions = !isEqual(existingGroup.permissions, groupEntity.permissions);
+            const { permissions, ...groupToUpdate } = groupEntity;
+
+            if (hasChangedPermissions) {
+                const relatedPermissions = await this.permissionRepository.find({ name: { value: permissions } });
+                await this.groupRepository.updateManyRelation(
+                    {
+                        id: groupToUpdate.id,
+                        relationName: GROUP_PERMISSION_REPOSITORY_MODEL,
+                        relationEntityName: PERMISSION_REPOSITORY_MODEL,
+                        relationIds: relatedPermissions.map((p) => p.id)
+                    },
+                    trx
+                );
+            }
+
+            return this.groupRepository.updateOne(id, groupToUpdate);
         });
-
-        return this.groupRepository.updateOne(id, groupEntity);
     }
 
     async deleteOne(id: string): Promise<boolean> {
@@ -97,5 +124,21 @@ export class GroupService {
             relationEntityName: USER_REPOSITORY_MODEL,
             relationIds: userIds
         });
+    }
+
+    private async getGroupWithPermissions(group: IGroupEntity, trx?: ITransaction): Promise<IGroupEntity> {
+        const permissions = await this.groupRepository.getManyRelation<IPermissionEntity>(
+            {
+                id: group.id,
+                relationName: GROUP_PERMISSION_REPOSITORY_MODEL,
+                relationEntityName: PERMISSION_REPOSITORY_MODEL
+            },
+            trx
+        );
+
+        return {
+            ...group,
+            permissions: permissions.map((p) => p.name)
+        };
     }
 }

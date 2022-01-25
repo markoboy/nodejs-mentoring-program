@@ -60,12 +60,14 @@ export interface IManyEntityRelation<T extends IBaseEntity> {
 export interface IReadRepository<T extends IBaseEntity = IBaseEntity> {
     find(matchers?: IRepositoryMatchers<T>, filters?: IRepositoryFilters): Promise<T[]>;
     findById(id: T['id']): Promise<T | null>;
+    getManyRelation<R>(options: Omit<IManyEntityRelation<T>, 'relationIds'>, trx?: ITransaction): Promise<R[]>;
 }
 
 export interface IWriteRepository<T extends IBaseEntity = IBaseEntity> {
     addManyRelation(options: IManyEntityRelation<T>, trx?: ITransaction): Promise<boolean>;
+    updateManyRelation(options: IManyEntityRelation<T>, trx?: ITransaction): Promise<boolean>;
     create(entity: Partial<T>, trx?: ITransaction): Promise<T>;
-    updateOne(id: T['id'], partialEntity: Partial<Omit<T, 'id'>>): Promise<boolean>;
+    updateOne(id: T['id'], partialEntity: Partial<Omit<T, 'id'>>, trx?: ITransaction): Promise<boolean>;
     softDeleteOne(id: T['id']): Promise<boolean>;
     transaction<R = unknown>(cb: ITransactionCallback<unknown, R>): Promise<R>;
     deleteOne(id: T['id']): Promise<boolean>;
