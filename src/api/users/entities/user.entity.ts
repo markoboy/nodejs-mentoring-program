@@ -4,12 +4,14 @@ import Joi from 'joi';
 
 export type HashUserPassword = (password: string) => Promise<string> | string;
 
-export interface IUserEntity extends Partial<IBaseEntity> {
+export interface IUserEntity extends IBaseEntity {
     login: string;
 
     password: string;
 
     age: number;
+
+    isDeleted: boolean;
 }
 
 export const userLoginValidation = Joi.string();
@@ -43,16 +45,19 @@ export class UserEntity extends BaseEntity implements IUserEntity {
 
     readonly age: number;
 
+    readonly isDeleted: boolean;
+
     protected constructor({ id, login, password, age, isDeleted }: IUserEntity) {
-        super({ id, isDeleted });
+        super({ id });
 
         this.login = login;
         this.password = password;
         this.age = age;
+        this.isDeleted = isDeleted;
     }
 
-    static async create(user: IUserEntity, hashUserPassword?: HashUserPassword): Promise<UserEntity> {
-        if (hashUserPassword) {
+    static async create(user: Partial<IUserEntity>, hashUserPassword?: HashUserPassword): Promise<UserEntity> {
+        if (hashUserPassword && user.password) {
             try {
                 user.password = await Promise.resolve(hashUserPassword(user.password));
             } catch (error) {
@@ -60,14 +65,16 @@ export class UserEntity extends BaseEntity implements IUserEntity {
             }
         }
 
-        const userEntity = new UserEntity(user);
-
         try {
-            await userSchema.validateAsync(userEntity);
+            if (!user.id) {
+                user.id = this.generateUUID();
+                user.isDeleted = false;
+            }
+
+            const validatedUser: IUserEntity = await userSchema.validateAsync(user);
+            return new UserEntity(validatedUser);
         } catch (error) {
             throw new ValidationException((error as Error).message);
         }
-
-        return userEntity;
     }
 }

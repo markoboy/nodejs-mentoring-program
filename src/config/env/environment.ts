@@ -18,7 +18,7 @@ export class Environment {
             envFile = '.env';
         }
 
-        dotenv.config({ path: path.resolve(__dirname, envFile) });
+        dotenv.config({ path: path.resolve(process.cwd(), envFile) });
 
         this.loaded = true;
     }

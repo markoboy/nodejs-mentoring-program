@@ -1,12 +1,43 @@
 import { IBaseEntity } from '@common/entities';
 import { BadRequestException, NotFoundException } from '@common/exceptions';
-import { IBaseRepository, IRepositoryFilters, IRepositoryMatcher, IRepositoryMatchers } from '@common/repositories';
+import {
+    IBaseRepository,
+    IManyEntityRelation,
+    IRepositoryFilters,
+    IRepositoryMatcher,
+    IRepositoryMatchers,
+    ITransaction,
+    ITransactionCallback
+} from '@common/repositories';
 import { isRepositoryMatcherField } from '@common/utils';
 
 export class MemoryRepository<T extends IBaseEntity> implements IBaseRepository<T> {
     private readonly store: Map<T['id'], T> = new Map();
 
     constructor(protected readonly entityName: string) {}
+
+    async getManyRelation<R>(
+        options: Omit<IManyEntityRelation<T>, 'relationIds'>,
+        trx?: ITransaction<unknown>
+    ): Promise<R[]> {
+        return [];
+    }
+
+    async addManyRelation(options: IManyEntityRelation<T>, trx?: ITransaction<unknown>): Promise<boolean> {
+        return false;
+    }
+
+    async updateManyRelation(options: IManyEntityRelation<T>, trx?: ITransaction<unknown>): Promise<boolean> {
+        return false;
+    }
+
+    async softDeleteOne(id: T['id']): Promise<boolean> {
+        return false;
+    }
+
+    async transaction<R = unknown>(cb: ITransactionCallback<unknown, R>): Promise<R> {
+        return cb({ trx: null });
+    }
 
     async find(matchers?: IRepositoryMatchers<T>, filters?: IRepositoryFilters): Promise<T[]> {
         const results: T[] = [];
@@ -101,7 +132,7 @@ export class MemoryRepository<T extends IBaseEntity> implements IBaseRepository<
                 const field = matchers[key] as IRepositoryMatcher<P[typeof key]>;
 
                 let exact = false;
-                let value: P[typeof key] | undefined;
+                let value: P[typeof key] | P[keyof P][];
 
                 // Check if we should do exact matching or partial matching
                 if (isRepositoryMatcherField(field)) {

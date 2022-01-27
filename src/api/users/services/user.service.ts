@@ -1,16 +1,15 @@
 import { Inject, Provider } from '@common/decorators';
 import { NotFoundException, BadRequestException } from '@common/exceptions';
 import { IBaseRepository } from '@common/repositories';
+import { USER_REPOSITORY_MODEL } from '@constants/table-names';
 import { CORE_TYPES, CORE_INTERFACES } from '@core';
 
-import { HashService } from '.';
+import { HashService } from './hash.service';
 import { IUserEntity, UserEntity } from '../entities';
 
 export type IUserSafe = Omit<Required<IUserEntity>, 'password'> & {
     password?: null;
 };
-
-export const USER_REPOSITORY_MODEL = 'users';
 
 @Provider()
 export class UserService {
@@ -69,7 +68,7 @@ export class UserService {
     }
 
     async deleteOne(id: string): Promise<boolean> {
-        return this.userRepository.deleteOne(id);
+        return this.userRepository.softDeleteOne(id);
     }
 
     async getAutoSuggestUsers(loginSubstring: string, limit: number): Promise<IUserSafe[]> {
