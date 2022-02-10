@@ -1,3 +1,5 @@
+import { ILoggerLevels } from '@core/logger';
+
 export type INodeEnvironment = 'development' | 'production';
 
 export interface IDatabaseEnvironment {
@@ -17,10 +19,18 @@ export interface IPostgresEnvironment {
     database?: string;
 }
 
+export interface ILogEnvironment {
+    level: ILoggerLevels;
+    path: string;
+    console: boolean;
+}
+
 export interface IEnvironment {
     nodeEnv: INodeEnvironment;
 
     port: number;
+
+    log: ILogEnvironment;
 
     db: IDatabaseEnvironment;
 

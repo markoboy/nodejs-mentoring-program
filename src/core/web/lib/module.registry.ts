@@ -146,6 +146,9 @@ export abstract class ModuleRegistry {
     public registerModule(coreModule: IImportTarget, container: interfaces.Container): void {
         const { controllers, exports, imports, prefix = '', providers } = getModuleMetadata(coreModule);
 
+        const logger = container.get<CORE_INTERFACES.Logger>(CORE_TYPES.Logger);
+        logger.debug('Registering module', { name: coreModule.name, isChildModule: !!container.parent });
+
         const modulePrefix = this.getModulePrefix(prefix, container);
         container.bind<CORE_INTERFACES.ModulePrefix>(CORE_TYPES.ModulePrefix).toConstantValue(modulePrefix);
 
