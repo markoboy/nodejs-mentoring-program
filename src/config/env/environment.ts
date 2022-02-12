@@ -4,7 +4,7 @@ import path from 'path';
 import { getEnvBoolean, getEnvNumber, getEnvString } from '@common/utils';
 
 import { IEnvironment, INodeEnvironment } from './environment.interface';
-import { BadRequestException } from '@common/exceptions';
+import { BadRequestException, ValidationException } from '@common/exceptions';
 import { ILoggerLevels } from '@core/logger';
 
 const NODE_ENV = getEnvString<INodeEnvironment>('NODE_ENV', 'development');
@@ -14,6 +14,12 @@ type KeyType = keyof IEnvironment;
 type ObjectType<T = unknown> = T extends KeyType ? IEnvironment[T] : IEnvironment;
 
 function getEnv(): IEnvironment {
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret) {
+        throw new ValidationException('JWT_SECRET environmental variable must be set!');
+    }
+
     return {
         nodeEnv: NODE_ENV,
         port: getEnvNumber('PORT', 3000),
@@ -39,6 +45,11 @@ function getEnv(): IEnvironment {
             user: process.env.PG_USER,
             password: process.env.PG_PASSWORD,
             database: process.env.PG_DATABASE
+        },
+
+        jwt: {
+            expires: getEnvString('JWT_EXPIRES', '01h'),
+            secret
         }
     };
 }

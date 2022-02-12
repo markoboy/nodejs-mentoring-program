@@ -1,9 +1,10 @@
 import { Module } from '@common/decorators';
 import { UserController } from './controllers';
-import { HashService, UserService } from './services';
+import { AuthService, HashService, UserService } from './services';
 
 @Module({
     controllers: [UserController],
-    providers: [HashService, UserService]
+    providers: [HashService, UserService, AuthService],
+    exports: [AuthService]
 })
 export class UserModule {}
