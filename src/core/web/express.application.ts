@@ -1,4 +1,6 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
 
 import { HttpResponseFactory } from '@common/controllers';
 import { HttpStatus } from '@common/decorators';
@@ -10,11 +12,13 @@ import { AbstractApplication, ExpressModuleRegistry, ModuleRegistry } from './li
 export class ExpressApplication extends AbstractApplication {
     public app: Application = express();
 
-    protected moduleRegistry: ModuleRegistry = new ExpressModuleRegistry(this.app);
+    protected moduleRegistry: ModuleRegistry = new ExpressModuleRegistry({ app: this.app, container: this.container });
 
     registerMiddleware(): void | Promise<void> {
+        this.app.use(helmet());
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use(express.json());
+        this.app.use(cors());
     }
 
     registerErrorMiddleware(): void {

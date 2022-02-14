@@ -1,7 +1,7 @@
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 import { Inject, Provider } from '@common/decorators';
-import { Exception, UnauthorizedException } from '@common/exceptions';
+import { Exception, ForbiddenException, UnauthorizedException } from '@common/exceptions';
 import { IBaseRepository } from '@common/repositories';
 import { Environment } from '@config';
 import { USER_REPOSITORY_MODEL } from '@constants';
@@ -9,18 +9,24 @@ import { CORE_INTERFACES, CORE_TYPES } from '@core';
 
 import { UserEntity } from '../entities';
 import { HashService } from './hash.service';
+import { IUserSafe, UserService } from './user.service';
 
 export interface IAuthCredentials {
     login: string;
     password: string;
 }
 
-type JWTParameters = Parameters<typeof jwt.sign>;
+export interface IJWTSignature extends JwtPayload {
+    id: string;
+}
+
+type JWTSignParameters = Parameters<typeof jwt.sign>;
+type JWTVerifyParameters = Parameters<typeof jwt.verify>;
 
 function jwtSign(
-    payload: JWTParameters[0],
-    secretOrPrivateKey: JWTParameters[1],
-    options: JWTParameters[2]
+    payload: IJWTSignature,
+    secretOrPrivateKey: JWTSignParameters[1],
+    options: JWTSignParameters[2]
 ): Promise<string> {
     return new Promise((resolve, reject) => {
         jwt.sign(payload, secretOrPrivateKey, options, (err, token) => {
@@ -33,6 +39,22 @@ function jwtSign(
     });
 }
 
+function jwtVerify(
+    payload: JWTVerifyParameters[0],
+    secretOrPrivateKey: JWTVerifyParameters[1],
+    options?: JWTVerifyParameters[2]
+): Promise<IJWTSignature> {
+    return new Promise((resolve, reject) => {
+        jwt.verify(payload, secretOrPrivateKey, options, (err, token) => {
+            if (err || !token) {
+                return reject(err);
+            }
+
+            resolve(token as IJWTSignature);
+        });
+    });
+}
+
 @Provider()
 export class AuthService {
     private readonly userRepository: IBaseRepository<UserEntity>;
@@ -40,7 +62,8 @@ export class AuthService {
     constructor(
         @Inject(CORE_TYPES.DatabaseDriver) databaseDriver: CORE_INTERFACES.DatabaseDriver,
         @Inject(CORE_TYPES.Logger) private logger: CORE_INTERFACES.Logger,
-        private hashService: HashService
+        private hashService: HashService,
+        private userService: UserService
     ) {
         this.userRepository = databaseDriver.getRepository<UserEntity>(USER_REPOSITORY_MODEL);
     }
@@ -68,7 +91,17 @@ export class AuthService {
         }
     }
 
-    async verifyJWTToken(): Promise<void> {
-        console.log('Token verified');
+    async verifyJWTToken(token: string): Promise<IUserSafe> {
+        const { secret } = Environment.get('jwt');
+
+        let id: string;
+        try {
+            ({ id } = await jwtVerify(token, secret));
+        } catch (error) {
+            this.logger.error('JWT Token verification failed', Object.assign(error, { token }));
+            throw new ForbiddenException('Token has expired. Please login again.');
+        }
+
+        return this.userService.findById(id);
     }
 }

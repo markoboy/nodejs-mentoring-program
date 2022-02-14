@@ -1,71 +1,60 @@
 import { Application, Router } from 'express';
 import { interfaces } from 'inversify';
 
-import { HttpRequest, HttpRequestMethod, HttpResponseFactory } from '@common/controllers';
-import { BaseController, IControllerDefinition, IRouteDefinition } from '@common/decorators';
-import { CORE_INTERFACES, CORE_TYPES } from '@core';
+import { IMiddlewareModule } from '@common/controllers';
+import { getModuleMetadata, IImportTarget } from '@common/decorators';
+import { isMiddlewareModule } from '@common/utils';
 
+import { ExpressControllerRegistry } from './express-controller.registry';
+import { ExpressMiddlewareConsumer } from './express-middleware.consumer';
 import { ModuleRegistry } from './module.registry';
 
+interface IExpressModuleRegistryOptions {
+    app: Application;
+    container: interfaces.Container;
+    router?: Router;
+}
+
 export class ExpressModuleRegistry extends ModuleRegistry {
-    constructor(private readonly app: Application) {
-        super();
+    private readonly app: Application;
+
+    private readonly router: Router;
+
+    constructor({ app, container, router }: IExpressModuleRegistryOptions) {
+        super(container);
+        this.app = app;
+        this.router = router ?? Router();
     }
 
-    protected registerController(
-        controller: IControllerDefinition,
-        routes: IRouteDefinition[],
-        container: interfaces.Container
-    ): void | Promise<void> {
-        const logger = container.get<CORE_INTERFACES.Logger>(CORE_TYPES.Logger);
-        logger.debug('Registering controller', { name: controller.target.name, path: controller.path, routes });
+    protected createModule(container: interfaces.Container): ModuleRegistry {
+        const { app, router } = this;
+        return new ExpressModuleRegistry({ app, container, router });
+    }
 
-        const router = Router();
+    protected registerMiddleware(moduleInstance: IMiddlewareModule, moduleRouter: Router): void {
+        const expressMiddlewareConsumer = new ExpressMiddlewareConsumer(this.container);
+        moduleInstance.configure(expressMiddlewareConsumer);
+        expressMiddlewareConsumer.use(moduleRouter);
+    }
 
-        routes.forEach((route) => {
-            const controllerInstance = container.get<BaseController>(
-                controller.target as unknown as typeof BaseController
-            );
+    public registerModule(CoreModule: IImportTarget<unknown>): void {
+        const { controllers, prefix = '' } = getModuleMetadata(CoreModule);
 
-            const fullPath = `${controller.path}${route.path}`;
-            router[route.method](route.path, async (req, res, next) => {
-                const request: HttpRequest = {
-                    body: req.body,
-                    headers: req.headers,
-                    ip: req.ip,
-                    method: req.method as HttpRequestMethod,
-                    params: req.params,
-                    path: req.path,
-                    query: req.query,
-                    url: req.baseUrl
-                };
+        const moduleInstance = this.container.resolve(CoreModule);
+        const hasMiddleware = isMiddlewareModule(moduleInstance);
+        if (hasMiddleware) {
+            this.registerMiddleware(moduleInstance, this.router);
+        }
 
-                try {
-                    logger.profile(fullPath);
+        super.registerModule(CoreModule);
 
-                    logger.http(fullPath, { request, name: controller.target.name, method: route.methodName });
+        if (controllers?.length) {
+            const controllerRegistry = new ExpressControllerRegistry(this.router, this.container);
+            controllerRegistry.registerControllers(controllers);
+        }
 
-                    const data = await Promise.resolve(controllerInstance[route.methodName](request));
-
-                    logger.profile(fullPath);
-
-                    res.status(route.status).json(HttpResponseFactory.createSuccessfulResponse(data));
-                } catch (error) {
-                    logger.profile(fullPath);
-
-                    logger.warn(fullPath, {
-                        message: (error as Error)?.message ?? error,
-                        stack: (error as Error)?.stack,
-                        request,
-                        name: controller.target.name,
-                        method: route.methodName
-                    });
-
-                    return next(error);
-                }
-            });
-        });
-
-        this.app.use(controller.path, router);
+        if (hasMiddleware || controllers?.length) {
+            this.app.use(this.getModulePrefix(prefix), this.router);
+        }
     }
 }
