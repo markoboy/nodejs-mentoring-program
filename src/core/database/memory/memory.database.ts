@@ -31,4 +31,8 @@ export class MemoryDatabase implements IDatabaseDriver {
 
         return repository;
     }
+
+    async destroy(): Promise<void> {
+        this.repositories.clear();
+    }
 }

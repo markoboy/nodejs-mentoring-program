@@ -1,8 +1,9 @@
 import { Application, Router } from 'express';
 import { interfaces } from 'inversify';
 
-import { HttpRequestMethod, HttpResponseFactory } from '@common/controllers';
+import { HttpRequest, HttpRequestMethod, HttpResponseFactory } from '@common/controllers';
 import { BaseController, IControllerDefinition, IRouteDefinition } from '@common/decorators';
+import { CORE_INTERFACES, CORE_TYPES } from '@core';
 
 import { ModuleRegistry } from './module.registry';
 
@@ -16,8 +17,8 @@ export class ExpressModuleRegistry extends ModuleRegistry {
         routes: IRouteDefinition[],
         container: interfaces.Container
     ): void | Promise<void> {
-        console.log(`[Controller]:[${controller.path}] Registration for ${controller.target.name} started`);
-        console.table(routes);
+        const logger = container.get<CORE_INTERFACES.Logger>(CORE_TYPES.Logger);
+        logger.debug('Registering controller', { name: controller.target.name, path: controller.path, routes });
 
         const router = Router();
 
@@ -26,28 +27,39 @@ export class ExpressModuleRegistry extends ModuleRegistry {
                 controller.target as unknown as typeof BaseController
             );
 
+            const fullPath = `${controller.path}${route.path}`;
             router[route.method](route.path, async (req, res, next) => {
+                const request: HttpRequest = {
+                    body: req.body,
+                    headers: req.headers,
+                    ip: req.ip,
+                    method: req.method as HttpRequestMethod,
+                    params: req.params,
+                    path: req.path,
+                    query: req.query,
+                    url: req.baseUrl
+                };
+
                 try {
-                    console.time(`[${controller.target.name}]:[${route.methodName}] Request route handler`);
+                    logger.profile(fullPath);
 
-                    const data = await Promise.resolve(
-                        controllerInstance[route.methodName]({
-                            body: req.body,
-                            headers: req.headers,
-                            ip: req.ip,
-                            method: req.method as HttpRequestMethod,
-                            params: req.params,
-                            path: req.path,
-                            query: req.query,
-                            url: req.url
-                        })
-                    );
+                    logger.http(fullPath, { request, name: controller.target.name, method: route.methodName });
 
-                    console.timeEnd(`[${controller.target.name}]:[${route.methodName}] Request route handler`);
+                    const data = await Promise.resolve(controllerInstance[route.methodName](request));
+
+                    logger.profile(fullPath);
 
                     res.status(route.status).json(HttpResponseFactory.createSuccessfulResponse(data));
                 } catch (error) {
-                    console.timeEnd(`[${controller.target.name}]:[${route.methodName}] Request route handler`);
+                    logger.profile(fullPath);
+
+                    logger.warn(fullPath, {
+                        message: (error as Error)?.message ?? error,
+                        stack: (error as Error)?.stack,
+                        request,
+                        name: controller.target.name,
+                        method: route.methodName
+                    });
 
                     return next(error);
                 }
@@ -55,7 +67,5 @@ export class ExpressModuleRegistry extends ModuleRegistry {
         });
 
         this.app.use(controller.path, router);
-
-        console.log(`[Controller]:[${controller.path}] ${controller.target.name} was registered\n`);
     }
 }

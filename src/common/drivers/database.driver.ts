@@ -5,4 +5,6 @@ export interface IDatabaseDriver {
     getRepository<T extends IBaseEntity>(
         ...args: ConstructorParameters<IRepositoryConstructable<T>>
     ): IBaseRepository<T>;
+
+    destroy(): Promise<void>;
 }

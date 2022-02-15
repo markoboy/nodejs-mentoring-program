@@ -28,6 +28,11 @@ export class KnexDatabase implements IDatabaseDriver {
         return dataModel;
     }
 
+    destroy(): Promise<void> {
+        this.repositories.clear();
+        return this.knex.destroy();
+    }
+
     private createRepository<T extends IBaseEntity>(entityName: string): IBaseRepository<T> {
         if (this.repositories.has(entityName)) {
             throw new BadRequestException(`Repository: ${entityName} already exists.`);
