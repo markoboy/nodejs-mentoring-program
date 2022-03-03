@@ -19,6 +19,10 @@
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true,
     "baseUrl": "./src",
+    "typeRoots": [
+      "./src/types",
+      "node_modules/@types"
+    ],
     "paths": {
       "@api": [
         "api"

@@ -4,9 +4,15 @@ export type HttpRequestMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 export type HttpRequestDefaultParams = Record<string, unknown>;
 export type HttpRequestDefaultBody = Record<string, unknown>;
+export type HttpRequestDefaultContext = Record<string, unknown>;
 export type HttpRequestDefaultQuery = Record<string, unknown>;
 
-export interface HttpRequest<B = HttpRequestDefaultBody, P = HttpRequestDefaultParams, Q = HttpRequestDefaultQuery> {
+export interface HttpRequest<
+    C = HttpRequestDefaultContext,
+    B = HttpRequestDefaultBody,
+    P = HttpRequestDefaultParams,
+    Q = HttpRequestDefaultQuery
+> {
     body: B;
     headers: IncomingHttpHeaders;
     ip: string;
@@ -15,4 +21,5 @@ export interface HttpRequest<B = HttpRequestDefaultBody, P = HttpRequestDefaultP
     params: P;
     query: Q;
     url: string;
+    context?: C;
 }

@@ -1,132 +1,58 @@
 import { interfaces } from 'inversify';
 
-import {
-    getControllerMetadata,
-    getModuleMetadata,
-    getRoutesMetadata,
-    IControllerDefinition,
-    IControllerTarget,
-    IExportTarget,
-    IImportTarget,
-    IModuleDefinition,
-    IProviderDefinition,
-    IRouteDefinition
-} from '@common/decorators';
-import { BadRequestException } from '@common/exceptions';
-import { isProviderDefinition } from '@common/utils';
-import { CORE_TYPES, CORE_INTERFACES } from '@core';
+import { getModuleMetadata, IImportTarget } from '@common/decorators';
+import { CORE_INTERFACES, CORE_TYPES } from '@core';
+import { ProviderRegistry } from './provider.registry';
 
 export abstract class ModuleRegistry {
-    protected abstract registerController(
-        controller: IControllerDefinition,
-        routes: IRouteDefinition[],
-        container: interfaces.Container
-    ): Promise<void> | void;
+    protected providerRegistry: ProviderRegistry = new ProviderRegistry(this.container);
+
+    constructor(protected container: interfaces.Container) {}
+
+    protected abstract createModule(container: interfaces.Container): ModuleRegistry;
 
     /**
-     * Registers controllers of each module to the application.
+     * Register the module and it's imported children to the container. Registers
+     * modules providers to be consumed by the application.
      *
-     * @param prefix The prefix of the module registering the controllers
-     * @param controllers The controllers of each module
-     * @param container The container that the controller will be resolved
+     * @param coreModule The module to register
      */
-    private registerControllers(
-        prefix?: string,
-        controllers?: IControllerTarget[],
-        container?: interfaces.Container
-    ): void {
-        if (!container) {
-            return;
-        }
+    public registerModule(coreModule: IImportTarget): void {
+        const { exports, imports, prefix = '', providers } = getModuleMetadata(coreModule);
 
-        controllers?.forEach((controller) => {
-            const { path, target } = getControllerMetadata(controller);
-            const routesMetadata = getRoutesMetadata(controller);
+        const modulePrefix = this.getModulePrefix(prefix);
+        this.container.bind<CORE_INTERFACES.ModulePrefix>(CORE_TYPES.ModulePrefix).toConstantValue(modulePrefix);
 
-            const controllerPath = prefix && prefix !== '/' ? prefix + path : path;
-
-            if (target && routesMetadata) {
-                container.bind(target).toSelf().inRequestScope();
-
-                this.registerController({ path: controllerPath, target }, routesMetadata, container);
-            }
-        });
-    }
-
-    /**
-     * Register the provider to the container of the module.
-     *
-     * @param provider The provider to register
-     * @param container The container to register the provider to
-     */
-    private registerProvider(provider: IExportTarget, container: interfaces.Container | null): void {
-        if (!container || !provider) {
-            return;
-        }
-
-        if (isProviderDefinition(provider)) {
-            if (provider.target) {
-                container.bind(provider.type).to(provider.target).inSingletonScope();
-            } else if (provider.value) {
-                container.bind(provider.type).toConstantValue(provider.value);
-            } else {
-                throw new BadRequestException(
-                    `${String(provider.type)} is not a valid provider. "target" or "value" is required.`
-                );
-            }
-        } else {
-            container.bind(provider).toSelf().inSingletonScope();
-        }
-    }
-
-    /**
-     * Registers all providers to the container and exports to the parent container.
-     *
-     * @param providers The exports and providers to register
-     * @param container The container to register providers to
-     */
-    private registerProviders(
-        { exports: exported = [], providers }: Pick<IModuleDefinition, 'exports' | 'providers'>,
-        container: interfaces.Container
-    ): void {
-        providers?.forEach((provider) => {
-            this.registerProvider(provider, container);
+        const logger = this.container.get<CORE_INTERFACES.Logger>(CORE_TYPES.Logger);
+        logger.debug('Registering module', {
+            name: coreModule.name,
+            isChildModule: !!this.container.parent,
+            modulePrefix
         });
 
-        exported.forEach((provider) => {
-            let providerType: IProviderDefinition['type'] | null = null;
+        this.providerRegistry.registerProviders({ exports, providers });
 
-            if (isProviderDefinition(provider)) {
-                providerType = provider.type;
-            } else if (provider) {
-                providerType = provider;
-            }
+        if (imports) {
+            imports.forEach((importModule) => {
+                const childContainer = this.container.createChild();
 
-            // Register the same instance for the exported dependencies
-            if (providerType) {
-                this.registerProvider(
-                    {
-                        type: providerType,
-                        value: container.get(providerType)
-                    },
-                    container.parent
-                );
-            }
-        });
+                const moduleRegistry = this.createModule(childContainer);
+                moduleRegistry.registerModule(importModule);
+            });
+        }
     }
 
     /**
      * Get's the module prefix concatenated from the parent module and current module.
      *
      * @param prefix The module's prefix
-     * @param container The container of the module
      * @returns The concatenated prefix of the modules
      */
-    private getModulePrefix(prefix: string, container: interfaces.Container): string {
+    protected getModulePrefix(prefix: string): string {
         let modulePrefix = prefix;
 
-        if (container.parent) {
-            const parentPrefix = container.parent.get(CORE_TYPES.ModulePrefix);
+        if (this.container.parent) {
+            const parentPrefix = this.container.parent.get(CORE_TYPES.ModulePrefix);
 
             if (parentPrefix && parentPrefix !== '/') {
                 modulePrefix = parentPrefix + modulePrefix;
@@ -134,33 +60,5 @@ export abstract class ModuleRegistry {
         }
 
         return modulePrefix;
-    }
-
-    /**
-     * Register the module and it's imported children to the container. Registers
-     * modules providers and controllers to be consumed by the application.
-     *
-     * @param coreModule The module to register
-     * @param container The container to register the module to
-     */
-    public registerModule(coreModule: IImportTarget, container: interfaces.Container): void {
-        const { controllers, exports, imports, prefix = '', providers } = getModuleMetadata(coreModule);
-
-        const logger = container.get<CORE_INTERFACES.Logger>(CORE_TYPES.Logger);
-        logger.debug('Registering module', { name: coreModule.name, isChildModule: !!container.parent });
-
-        const modulePrefix = this.getModulePrefix(prefix, container);
-        container.bind<CORE_INTERFACES.ModulePrefix>(CORE_TYPES.ModulePrefix).toConstantValue(modulePrefix);
-
-        this.registerProviders({ exports, providers }, container);
-
-        if (imports) {
-            imports.forEach((importModule) => {
-                const childContainer = container.createChild();
-                this.registerModule(importModule, childContainer);
-            });
-        }
-
-        this.registerControllers(modulePrefix, controllers, container);
     }
 }

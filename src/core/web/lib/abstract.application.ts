@@ -34,7 +34,7 @@ export abstract class AbstractApplication {
         await Promise.resolve(this.registerMiddleware());
         this.logger.info('Registered application middleware');
 
-        await Promise.resolve(this.moduleRegistry.registerModule(this.bootstrapModule, this.container));
+        await Promise.resolve(this.moduleRegistry.registerModule(this.bootstrapModule));
         this.logger.info('Registered application modules');
 
         await Promise.resolve(this.registerErrorMiddleware());

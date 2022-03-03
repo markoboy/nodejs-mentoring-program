@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { IBaseEntity } from '@common/entities';
 import { BadRequestException, NotFoundException } from '@common/exceptions';
 import {

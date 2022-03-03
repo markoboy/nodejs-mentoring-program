@@ -1,4 +1,4 @@
-import { Exception } from '.';
+import { Exception } from './exception';
 
 export class BadRequestException extends Exception {
     name = 'BadRequest';

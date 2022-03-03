@@ -3,7 +3,7 @@
         "NODE_ENV": "development"
     },
     "execMap": {
-        "ts": "npx ts-node -r ./scripts/register-dev.js"
+        "ts": "npx ts-node -r ./scripts/register-dev.js --files"
     },
     "ext": "ts",
     "ignore": [".git", "node_modules/**/node_modules", "temp/**/*", "dist/**/*"],

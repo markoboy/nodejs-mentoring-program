@@ -1,12 +1,12 @@
 import { HttpRequest } from '@common/controllers';
 import { Controller, Delete, Get, HttpStatus, Patch, Post } from '@common/decorators';
 
-import { CreateUserDTO, FindOneUserDTO, GetSuggestedUsersDTO, UpdateUserDTO } from '../dtos';
-import { IUserSafe, UserService } from '../services';
+import { CreateUserDTO, FindOneUserDTO, GetSuggestedUsersDTO, LoginUserDTO, UpdateUserDTO } from '../dtos';
+import { AuthService, IUserSafe, UserService } from '../services';
 
 @Controller('/users')
 export class UserController {
-    constructor(private readonly userService: UserService) {}
+    constructor(private readonly userService: UserService, private readonly authService: AuthService) {}
 
     @Post('/', HttpStatus.CREATED)
     async create(httpRequest: HttpRequest): Promise<IUserSafe> {
@@ -42,5 +42,12 @@ export class UserController {
         const { id } = await FindOneUserDTO.from(httpRequest.params);
 
         return this.userService.deleteOne(id);
+    }
+
+    @Post('/login')
+    async login(httpRequest: HttpRequest): Promise<string> {
+        const loginUser = await LoginUserDTO.from(httpRequest.body);
+
+        return this.authService.signJWTToken(loginUser);
     }
 }

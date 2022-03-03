@@ -25,6 +25,11 @@ export interface ILogEnvironment {
     console: boolean;
 }
 
+export interface IJWTEnvironment {
+    secret: string;
+    expires: string;
+}
+
 export interface IEnvironment {
     nodeEnv: INodeEnvironment;
 
@@ -35,4 +40,6 @@ export interface IEnvironment {
     db: IDatabaseEnvironment;
 
     pg: IPostgresEnvironment;
+
+    jwt: IJWTEnvironment;
 }
