@@ -28,5 +28,6 @@ module.exports = {
     rootDir: path.resolve(__dirname, '..', 'src'),
     preset: 'ts-jest',
     testEnvironment: 'node',
-    moduleNameMapper: tsConfigToJestMapper()
+    moduleNameMapper: tsConfigToJestMapper(),
+    setupFilesAfterEnv: ['<rootDir>../scripts/jest/setup.ts']
 };

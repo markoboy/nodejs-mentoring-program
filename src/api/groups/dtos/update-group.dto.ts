@@ -2,10 +2,13 @@ import { ValidationException } from '@common/exceptions';
 import Joi from 'joi';
 import { groupSchema, IPermission } from '../entities';
 
-const updateGroupSchema = Joi.object<UpdateGroupDTO, true>({
-    name: groupSchema.$_reach(['name']).optional() as Joi.StringSchema,
-    permissions: groupSchema.$_reach(['permissions']).optional() as Joi.ArraySchema
-});
+const updateGroupSchema = Joi.object<UpdateGroupDTO, true>()
+    .keys({
+        name: groupSchema.$_reach(['name']).optional() as Joi.StringSchema,
+        permissions: groupSchema.$_reach(['permissions']).optional() as Joi.ArraySchema
+    })
+    .required()
+    .min(1);
 
 export class UpdateGroupDTO {
     readonly name?: string;
