@@ -44,7 +44,7 @@ export class GroupController {
     }
 
     @Post('/relation/:id', HttpStatus.CREATED)
-    async addUsersToGroup(httpRequest: HttpRequest): Promise<unknown> {
+    async addUsersToGroup(httpRequest: HttpRequest): Promise<boolean> {
         const { id } = await FindOneGroupDTO.from(httpRequest.params);
         const { userIds } = await AddUsersToGroupDTO.from(httpRequest.body);
 

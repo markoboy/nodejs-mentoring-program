@@ -117,7 +117,7 @@ export class GroupService {
         return this.groupRepository.deleteOne(id);
     }
 
-    async addUsersToGroup(groupId: IGroupEntity['id'], userIds: IUserEntity['id'][]): Promise<unknown> {
+    async addUsersToGroup(groupId: IGroupEntity['id'], userIds: IUserEntity['id'][]): Promise<boolean> {
         return this.groupRepository.addManyRelation({
             id: groupId,
             relationName: USER_GROUP_REPOSITORY_MODEL,

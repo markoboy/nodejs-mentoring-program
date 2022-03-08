@@ -2,13 +2,16 @@ import { ValidationException } from '@common/exceptions';
 import Joi from 'joi';
 import { userAgeValidation, userLoginValidation, userPasswordMessages, userPasswordValidation } from '../entities';
 
-const updateUserSchema = Joi.object<UpdateUserDTO, true>({
-    login: userLoginValidation.optional(),
+const updateUserSchema = Joi.object<UpdateUserDTO, true>()
+    .keys({
+        login: userLoginValidation.optional(),
 
-    password: userPasswordValidation.optional().messages(userPasswordMessages),
+        password: userPasswordValidation.optional().messages(userPasswordMessages),
 
-    age: userAgeValidation.optional()
-});
+        age: userAgeValidation.optional()
+    })
+    .required()
+    .min(1);
 
 export class UpdateUserDTO {
     public readonly login?: string;

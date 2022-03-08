@@ -2,11 +2,13 @@
 
 ## Available commands
 
-|command          |description                                               |
-|-----------------|----------------------------------------------------------|
-|`npm run dev`    |It will run the express server with linting               |
-|`npm run start`  |It will run the build and start the express server in prod|
-|`npm run lint`   |It will run the linting of the project                    |
+|command              |description                                               |
+|---------------------|----------------------------------------------------------|
+|`npm run dev`        |It will run the express server with linting               |
+|`npm run start`      |It will run the build and start the express server in prod|
+|`npm run lint`       |It will run the linting of the project                    |
+|`npm run test`       |It will run the tests of the project                      |
+|`npm run test:watch` |It will run the test in watch mode of the project         |
 
 ## Local Database administration
 
